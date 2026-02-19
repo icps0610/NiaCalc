@@ -1,5 +1,5 @@
-<!-- 2.7 -->
 <!DOCTYPE html>
+<!-- 3.0 -->
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
@@ -13,18 +13,29 @@
         .card { background: white; border-radius: 20px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
         .tab-active { color: #1e40af; border-bottom: 2px solid #1e40af; }
         .btn-active { background-color: #1e40af !important; color: white !important; }
-        input[type="date"], input[type="number"], select { -webkit-appearance: none; }
+        input[type="date"], select { -webkit-appearance: none; }
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type="number"] { -moz-appearance: textfield; }
     </style>
 </head>
 <body class="p-4 md:p-8">
     <div class="max-w-md mx-auto">
         <div class="card overflow-hidden border border-slate-200">
-            <div class="flex border-b border-slate-100 bg-slate-50/50">
+            <div class="flex border-b border-slate-100 bg-slate-50/50 relative">
                 <button onclick="switchMode('calc')" id="tab-calc" class="flex-1 py-4 text-sm font-bold text-slate-400 transition-all tab-active">🗓️ 合法期間計算</button>
                 <button onclick="switchMode('penalty')" id="tab-penalty" class="flex-1 py-4 text-sm font-bold text-slate-400 transition-all">⚠️ 裁罰期間計算</button>
             </div>
 
             <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <span id="loading-status" class="text-xs font-bold text-slate-400">載入假日資料中...</span>
+                    <div class="flex bg-slate-100 p-1 rounded-lg">
+                        <button onclick="setYearMode('CE')" id="btn-ce" class="px-3 py-1 rounded text-xs font-bold bg-white shadow-sm text-slate-700 transition-all">西元</button>
+                        <button onclick="setYearMode('ROC')" id="btn-roc" class="px-3 py-1 rounded text-xs font-bold text-slate-400 transition-all">民國</button>
+                    </div>
+                </div>
+
                 <div id="type-selector" class="mb-6">
                     <label class="block text-xs font-black text-slate-400 mb-2 uppercase tracking-wider">案件性質</label>
                     <div class="flex bg-slate-100 p-1 rounded-xl">
@@ -41,17 +52,25 @@
                     <div>
                         <label class="block text-xs font-bold text-slate-500 mb-1">入境日</label>
                         <input type="date" id="startDate" class="auto-calc w-full p-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500">
+                        <div id="startDate_roc_group" class="hidden flex items-center border border-slate-200 rounded-xl bg-white overflow-hidden w-full focus-within:ring-2 focus-within:ring-blue-500">
+                            <span class="pl-3 text-slate-400 text-sm font-bold whitespace-nowrap">民國</span>
+                            <input type="number" id="startDate_roc_y" class="auto-calc-roc w-full p-3 outline-none text-center" placeholder="年">
+                            <span class="text-slate-200">/</span>
+                            <input type="number" id="startDate_roc_m" class="auto-calc-roc w-full p-3 outline-none text-center" placeholder="月">
+                            <span class="text-slate-200">/</span>
+                            <input type="number" id="startDate_roc_d" class="auto-calc-roc w-full p-3 outline-none text-center" placeholder="日">
+                        </div>
                     </div>
                     <div class="flex gap-3">
                         <div class="flex-[2]">
                             <label class="block text-xs font-bold text-slate-500 mb-1">期間</label>
-                            <input type="number" id="periodValue" value="3" class="auto-calc w-full p-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500">
+                            <input type="number" id="periodValue" value="30" class="auto-calc w-full p-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                         <div class="flex-1">
                             <label class="block text-xs font-bold text-slate-500 mb-1">單位</label>
                             <select id="periodUnit" class="auto-calc w-full p-3 rounded-xl border border-slate-200 bg-white outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="day">日</option>
                                 <option value="month">月</option>
-                                <option value="day">日</option>                                
                                 <option value="year">年</option>
                             </select>
                         </div>
@@ -60,12 +79,28 @@
 
                 <div id="section-penalty" class="space-y-5 hidden">
                     <div>
-                        <label class="block text-xs font-bold text-slate-500 mb-1">裁罰期起算日</label>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">裁罰起算日</label>
                         <input type="date" id="date-start" class="auto-penalty w-full p-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500">
+                        <div id="date-start_roc_group" class="hidden flex items-center border border-slate-200 rounded-xl bg-white overflow-hidden w-full focus-within:ring-2 focus-within:ring-blue-500">
+                            <span class="pl-3 text-slate-400 text-sm font-bold whitespace-nowrap">民國</span>
+                            <input type="number" id="date-start_roc_y" class="auto-penalty-roc w-full p-3 outline-none text-center" placeholder="年">
+                            <span class="text-slate-200">/</span>
+                            <input type="number" id="date-start_roc_m" class="auto-penalty-roc w-full p-3 outline-none text-center" placeholder="月">
+                            <span class="text-slate-200">/</span>
+                            <input type="number" id="date-start_roc_d" class="auto-penalty-roc w-full p-3 outline-none text-center" placeholder="日">
+                        </div>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-500 mb-1">受理裁罰日</label>
                         <input type="date" id="date-end" class="auto-penalty w-full p-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500">
+                        <div id="date-end_roc_group" class="hidden flex items-center border border-slate-200 rounded-xl bg-white overflow-hidden w-full focus-within:ring-2 focus-within:ring-blue-500">
+                            <span class="pl-3 text-slate-400 text-sm font-bold whitespace-nowrap">民國</span>
+                            <input type="number" id="date-end_roc_y" class="auto-penalty-roc w-full p-3 outline-none text-center" placeholder="年">
+                            <span class="text-slate-200">/</span>
+                            <input type="number" id="date-end_roc_m" class="auto-penalty-roc w-full p-3 outline-none text-center" placeholder="月">
+                            <span class="text-slate-200">/</span>
+                            <input type="number" id="date-end_roc_d" class="auto-penalty-roc w-full p-3 outline-none text-center" placeholder="日">
+                        </div>
                     </div>
                 </div>
 
@@ -83,10 +118,73 @@
     </div>
 
     <script>
-        const HOLIDAY_DATA = {"2018":["1000011000001100000110000011000","0011000001100011111100011001","0011000001100000110000011000000","100111110000011000001100000110","0000110000011000001100000110000","011000001100000111000011000001","1000001100000110000011000001100","0001100000110000011000001100000","110000011000001100000111000011","0000011001001100000110000011000","001100000110000011000001100000","1100000110000011000000100000111"],"2019":["1000110000011000000100000110000","0111111111000001100000010001","1110000011000001100000110000011","000111100000110000011000001100","0001100000110000011000001100000","110000111000001100000110000011","0000011000001100000110000011000","0011000001100000110000011000001","100000110000111000001100000110","0000010001111000001100000110000","011000001100000110000011000001","1000001100000110000011000001100"],"2020":["1001100000110000011000111111100","11000001100000010000011000011","1000001100000110000011000001100","011110000011000001100000110000","0110000011000001100000110000011","000001100000110000001000111100","0001100000110000011000001100000","1100000110000011000001100000110","000011000001100000110000001000","1111000011100000110000011000001","100000110000011000001100000110","0000110000011000001100000110000"],"2021":["1110000011000001100000110000011","0000011001111111000010000011","1000011000001100000110000011000","011110000110000011000001100000","1100000110000011000001100000110","000011000001110000110000011000","0011000001100000110000011000001","1000001100000110000011000001100","000110000001000001111000110000","0110000011100001100000110000011","000001100000110000011000001100","0001100000110000011000001100001"],"2022":["1100000110000011000000100000111","1111110000011000001100000111","0000110000011000001100000110000","011110001100000110000011000001","1000001100000110000011000001100","001110000011000001100000110000","0110000011000001100000110000011","0000011000001100000110000011000","001100001110000011000001100000","1100000111000011000001100000110","000011000001100000110000011000","0011000001100000110000011000001"],"2023":["1100000100000110000111111111100","0000100000110000001000001111","0001100000110000011000000100000","111110011000001100000110000011","0000011000001100000110000011000","001100000110000001000111100000","1100000110000011000001100000110","0000110000011000001100000110000","011000001100000110000001000011","1000001111000110000011000001100","000110000011000001100000110000","0110000011000001100000110000011"],"2024":["1000011000001100000110000011000","00110001111111000100000110010","0110000011000001100000110000011","000111100000110000011000001100","0001100000110000011000001100000","110000011100001100000110000011","0000011000001100000110000011000","0011000001100000110000011000001","100000110000011010001100000110","0000110001011000001100000110000","011000001100000110000011000001","1000001100000110000011000001100"],"2025":["1001100000110000011000001111111","1100000010000011000001100001","1100000110000011000001100000110","001111000001100000110000011000","0011000001100000110000011000011","100000110000011000001100000110","0000110000011000001100000110000","0110000011000001100000110000011","000001100000110000011000001110","0001110001110000011000011100000","110000011000001100000110000011","0000011000001100000110001011000"],"2026":["1011000001100000110000011000001","1000001100000111111111000011","1000001100000110000011000001100","001111000011000001100000110000","1110000011000001100000110000011","000001100000110000111000001100","0001100000110000011000001100000","1100000110000011000001100000110","000011000001100000110000111100","0011000011100000110000011100001","100000110000011000001100000110","0000110000011000001100001110000"]};
-
-        let currentType = 'normal', currentMode = 'calc';
+        // 改為空物件，等待 fetch 載入
+        let HOLIDAY_DATA = {};
+        
+        let currentType = 'normal', currentMode = 'calc', yearMode = 'CE';
         const weekNames = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
+        const dateFieldIDs = ['startDate', 'date-start', 'date-end'];
+
+        // 非同步載入 holiday.json
+        async function loadHolidayData() {
+            const statusLabel = document.getElementById('loading-status');
+            try {
+                const response = await fetch('holiday.json');
+                if (!response.ok) throw new Error('Network response was not ok');
+                HOLIDAY_DATA = await response.json();
+                statusLabel.innerText = "假日資料已更新";
+                statusLabel.classList.replace('text-slate-400', 'text-emerald-500');
+                
+                // 3秒後隱藏狀態提示
+                setTimeout(() => {
+                    statusLabel.style.opacity = '0';
+                    statusLabel.style.transition = 'opacity 0.5s';
+                }, 3000);
+            } catch (error) {
+                console.error("無法載入 holiday.json，將退回僅判斷六日:", error);
+                statusLabel.innerText = "本地測試模式 (僅判斷週末)";
+                statusLabel.classList.replace('text-slate-400', 'text-amber-500');
+            }
+        }
+
+        function setYearMode(mode) {
+            yearMode = mode;
+            document.getElementById('btn-ce').className = mode === 'CE' ? 'px-3 py-1 rounded text-xs font-bold bg-white shadow-sm text-slate-700 transition-all' : 'px-3 py-1 rounded text-xs font-bold text-slate-400 transition-all';
+            document.getElementById('btn-roc').className = mode === 'ROC' ? 'px-3 py-1 rounded text-xs font-bold bg-white shadow-sm text-slate-700 transition-all' : 'px-3 py-1 rounded text-xs font-bold text-slate-400 transition-all';
+            
+            dateFieldIDs.forEach(id => {
+                document.getElementById(id).classList.toggle('hidden', mode === 'ROC');
+                document.getElementById(id + '_roc_group').classList.toggle('hidden', mode === 'CE');
+                syncDate(id, mode === 'CE' ? 'ROC' : 'CE');
+            });
+            triggerCalc();
+        }
+
+        function syncDate(id, source) {
+            if (source === 'CE') {
+                const ceVal = document.getElementById(id).value;
+                if (ceVal) {
+                    const [y, m, d] = ceVal.split('-');
+                    document.getElementById(id + '_roc_y').value = parseInt(y) - 1911;
+                    document.getElementById(id + '_roc_m').value = parseInt(m);
+                    document.getElementById(id + '_roc_d').value = parseInt(d);
+                }
+            } else {
+                const y = parseInt(document.getElementById(id + '_roc_y').value);
+                const m = parseInt(document.getElementById(id + '_roc_m').value);
+                const d = parseInt(document.getElementById(id + '_roc_d').value);
+                if (y && m && d) {
+                    const ceY = y + 1911;
+                    const ceM = ('0' + m).slice(-2);
+                    const ceD = ('0' + d).slice(-2);
+                    document.getElementById(id).value = `${ceY}-${ceM}-${ceD}`;
+                }
+            }
+        }
+
+        function triggerCalc() {
+            if (currentMode === 'calc') runCalc(); else runPenalty();
+        }
 
         function switchMode(m) {
             currentMode = m;
@@ -97,9 +195,7 @@
 
             document.getElementById('tab-calc').className = m === 'calc' ? 'flex-1 py-4 text-sm font-bold tab-active' : 'flex-1 py-4 text-sm font-bold text-slate-400';
             document.getElementById('tab-penalty').className = m === 'penalty' ? 'flex-1 py-4 text-sm font-bold tab-active' : 'flex-1 py-4 text-sm font-bold text-slate-400';
-            
-            // 切換時立即重算
-            if (m === 'calc') runCalc(); else runPenalty();
+            triggerCalc();
         }
 
         function setType(t) {
@@ -120,6 +216,7 @@
             let y = date.getFullYear();
             let m = ('0' + (date.getMonth() + 1)).slice(-2);
             let d = ('0' + date.getDate()).slice(-2);
+            if (yearMode === 'ROC') return `民國 ${y - 1911} 年 ${m} 月 ${d} 日`;
             return `${y}-${m}-${d}`;
         }
 
@@ -174,49 +271,40 @@
             let start = new Date(parts1[0], parts1[1]-1, parts1[2]);
             let end = new Date(parts2[0], parts2[1]-1, parts2[2]);
 
-            if (start > end) {
-                showResult("錯誤", "日期順序有誤", "", "起算日不可晚於受理日", "rose", "");
-                return;
-            }
+            if (start > end) return showResult("錯誤", "日期順序有誤", "", "起算日不可晚於受理日", "rose", "");
 
-            let originalEndStr = getLocalDateStr(end);
-            let skipDesc = "", skip = 0;
-            let calcEnd = new Date(end);
-            while (isHoliday(calcEnd)) { calcEnd.setDate(calcEnd.getDate() + 1); skip++; }
-            if (skip > 0) skipDesc = `※ 注意：原受理裁罰日(${originalEndStr})適逢假日，自動順延 ${skip} 天至 ${getLocalDateStr(calcEnd)}。\n\n`;
-
-            let totalMonths = (calcEnd.getFullYear() - start.getFullYear()) * 12 + (calcEnd.getMonth() - start.getMonth());
+            let totalMonths = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
             let tempDate = getEquivalentDate(start, totalMonths);
-            if (tempDate > calcEnd) { totalMonths--; tempDate = getEquivalentDate(start, totalMonths); }
+            if (tempDate > end) { totalMonths--; tempDate = getEquivalentDate(start, totalMonths); }
 
             let years = Math.floor(totalMonths / 12), months = totalMonths % 12;
-            let remainDays = Math.round((calcEnd - tempDate) / 864e5) + 1;
+            let remainDays = Math.round((end - tempDate) / 864e5) + 1;
 
             let resStr = "";
             if (years > 0) resStr += years + "年";
             if (months > 0) resStr += months + "個月";
             if (remainDays > 0 || resStr === "") resStr += remainDays + "日";
 
-            let detailHtml = skipDesc;
+            let detailHtml = "";
             if (totalMonths > 0) {
                 let endOfPeriod = new Date(tempDate);
                 endOfPeriod.setDate(endOfPeriod.getDate() - 1);
-                detailHtml += `計算期間應自起算日(${start.getMonth()+1}/${start.getDate()})相當日(${tempDate.getMonth()+1}/${tempDate.getDate()})之前一日(${endOfPeriod.getMonth()+1}/${endOfPeriod.getDate()})為期間之末日。\n\n`;
-                detailHtml += `${getLocalDateStr(start)} ～ ${getLocalDateStr(endOfPeriod)} 為 ${years > 0 ? years + '年' : ''}${months > 0 ? months + '個月' : ''}。\n`;
-                if (remainDays > 0) detailHtml += `${getLocalDateStr(tempDate)} ～ ${getLocalDateStr(calcEnd)} 計 ${remainDays} 日。`;
+                detailHtml += `計算期間應自起算日(${start.getMonth()+1}月${start.getDate()}日)相當日(${tempDate.getMonth()+1}月${tempDate.getDate()}日)之前一日(${endOfPeriod.getMonth()+1}月${endOfPeriod.getDate()}日)為期間之末日。\n\n`;
+                detailHtml += `因此，${getLocalDateStr(start)} ～ ${getLocalDateStr(endOfPeriod)} 為${years > 0 ? years + '年' : ''}${months > 0 ? months + '個月' : ''}。\n`;
+                if (remainDays > 0) detailHtml += `${getLocalDateStr(tempDate)} ～ ${getLocalDateStr(end)} 計 ${remainDays} 日。`;
             } else {
-                detailHtml += `起算日為 ${getLocalDateStr(start)}，至 ${getLocalDateStr(calcEnd)}，共計 ${remainDays} 日。`;
+                detailHtml += `起算日為 ${getLocalDateStr(start)}，至 ${getLocalDateStr(end)}，不足 1 個月。\n共計 ${remainDays} 日。`;
             }
             showResult("計算結果", resStr, ``, detailHtml, "emerald", "");
         }
 
         function showResult(t, m, s, d, color, total) {
-            const area = document.getElementById('result-area');
-            area.classList.remove('hidden');
+            document.getElementById('result-area').classList.remove('hidden');
             document.getElementById('res-title').innerText = t;
             document.getElementById('res-main').innerText = m;
             document.getElementById('res-sub').innerText = s;
             document.getElementById('res-detail').innerText = d;
+            
             const tBox = document.getElementById('res-total-days');
             tBox.innerText = total || ""; 
             tBox.classList.toggle('hidden', !total);
@@ -224,23 +312,33 @@
             document.getElementById('status-card').className = `p-5 rounded-2xl border ${themes[color]}`;
         }
 
-        // 初始化與事件綁定
-        window.onload = () => {
+        // 使用 async 確保資料載入完成後才執行初始計算
+        window.onload = async () => {
+            await loadHolidayData();
+
             const today = new Date().toISOString().split('T')[0];
-            document.getElementById('startDate').value = today;
-            document.getElementById('date-start').value = today;
-            document.getElementById('date-end').value = today;
-
-            // 綁定期間計算輸入
-            document.querySelectorAll('.auto-calc').forEach(el => {
-                el.addEventListener('input', runCalc);
-            });
-            // 綁定裁罰計算輸入
-            document.querySelectorAll('.auto-penalty').forEach(el => {
-                el.addEventListener('input', runPenalty);
+            dateFieldIDs.forEach(id => {
+                document.getElementById(id).value = today;
+                syncDate(id, 'CE');
             });
 
-            runCalc(); // 初始執行一次
+            document.querySelectorAll('.auto-calc').forEach(el => el.addEventListener('input', () => {
+                if(el.type === 'date') syncDate(el.id, 'CE');
+                triggerCalc();
+            }));
+            document.querySelectorAll('.auto-calc-roc').forEach(el => el.addEventListener('input', () => {
+                syncDate('startDate', 'ROC'); triggerCalc();
+            }));
+            document.querySelectorAll('.auto-penalty').forEach(el => el.addEventListener('input', () => {
+                if(el.type === 'date') syncDate(el.id, 'CE');
+                triggerCalc();
+            }));
+            document.querySelectorAll('.auto-penalty-roc').forEach(el => el.addEventListener('input', (e) => {
+                syncDate(e.target.id.replace('_roc_y','').replace('_roc_m','').replace('_roc_d',''), 'ROC'); 
+                triggerCalc();
+            }));
+
+            runCalc(); 
         };
     </script>
 </body>
