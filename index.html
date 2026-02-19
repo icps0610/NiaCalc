@@ -17,12 +17,8 @@
     <div class="max-w-md mx-auto">
         <div class="card overflow-hidden border border-slate-200">
             <div class="flex border-b border-slate-100 bg-slate-50/50">
-                <button onclick="switchMode('calc')" id="tab-calc" class="flex-1 py-4 text-sm font-bold text-slate-400 transition-all tab-active">
-                    🗓️ 期間計算
-                </button>
-                <button onclick="switchMode('overdue')" id="tab-overdue" class="flex-1 py-4 text-sm font-bold text-slate-400 transition-all">
-                    ⚠️ 逾期計算
-                </button>
+                <button onclick="switchMode('calc')" id="tab-calc" class="flex-1 py-4 text-sm font-bold text-slate-400 transition-all tab-active">🗓️ 期間計算</button>
+                <button onclick="switchMode('overdue')" id="tab-overdue" class="flex-1 py-4 text-sm font-bold text-slate-400 transition-all">⚠️ 逾期計算</button>
             </div>
 
             <div class="p-6">
@@ -56,23 +52,19 @@
                             </select>
                         </div>
                     </div>
-                    <button onclick="runCalc()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95">
-                        執行計算
-                    </button>
+                    <button onclick="runCalc()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95">執行計算</button>
                 </div>
 
                 <div id="section-overdue" class="space-y-5 hidden">
                     <div>
-                        <label class="block text-xs font-bold text-slate-500 mb-1">現況日期 / 離境日期 (日期一)</label>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">裁罰的當日</label>
                         <input type="date" id="date1" class="w-full p-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-500 mb-1">留效期截止日 (日期二)</label>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">停留效期截止日</label>
                         <input type="date" id="date2" class="w-full p-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
-                    <button onclick="runOverdue()" class="w-full bg-slate-800 hover:bg-black text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95">
-                        計算逾期天數
-                    </button>
+                    <button onclick="runOverdue()" class="w-full bg-slate-800 hover:bg-black text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95">計算逾期天數</button>
                 </div>
 
                 <div id="result-area" class="mt-8 hidden border-t border-dashed pt-6">
@@ -80,11 +72,8 @@
                         <div id="res-title" class="text-[10px] font-black uppercase tracking-widest mb-1"></div>
                         <div id="res-main" class="text-3xl font-black"></div>
                         <div id="res-sub" class="text-sm font-bold mt-1"></div>
-                        <div id="res-total-days" class="text-xs font-bold mt-2 text-slate-600"></div> <div id="res-detail" class="text-xs mt-3 leading-relaxed opacity-80"></div>
-                    </div>
-                    
-                    <div id="holiday-warn" class="hidden mt-4 p-2 bg-amber-50 border border-amber-100 text-amber-600 text-[10px] rounded-lg text-center">
-                        ⚠️ 查無該年國定假日資料，改以週六日判定。
+                        <div id="res-total-days" class="text-xs font-bold mt-2 text-slate-600"></div>
+                        <div id="res-detail" class="text-xs mt-3 leading-relaxed opacity-80"></div>
                     </div>
                 </div>
             </div>
@@ -94,145 +83,126 @@
     <script>
         const HOLIDAY_DATA = {"2018":["1000011000001100000110000011000","0011000001100011111100011001","0011000001100000110000011000000","100111110000011000001100000110","0000110000011000001100000110000","011000001100000111000011000001","1000001100000110000011000001100","0001100000110000011000001100000","110000011000001100000111000011","0000011001001100000110000011000","001100000110000011000001100000","1100000110000011000000100000111"],"2019":["1000110000011000000100000110000","0111111111000001100000010001","1110000011000001100000110000011","000111100000110000011000001100","0001100000110000011000001100000","110000111000001100000110000011","0000011000001100000110000011000","0011000001100000110000011000001","100000110000111000001100000110","0000010001111000001100000110000","011000001100000110000011000001","1000001100000110000011000001100"],"2020":["1001100000110000011000111111100","11000001100000010000011000011","1000001100000110000011000001100","011110000011000001100000110000","0110000011000001100000110000011","000001100000110000001000111100","0001100000110000011000001100000","1100000110000011000001100000110","000011000001100000110000001000","1111000011100000110000011000001","100000110000011000001100000110","0000110000011000001100000110000"],"2021":["1110000011000001100000110000011","0000011001111111000010000011","1000011000001100000110000011000","011110000110000011000001100000","1100000110000011000001100000110","000011000001110000110000011000","0011000001100000110000011000001","1000001100000110000011000001100","000110000001000001111000110000","0110000011100001100000110000011","000001100000110000011000001100","0001100000110000011000001100001"],"2022":["1100000110000011000000100000111","1111110000011000001100000111","0000110000011000001100000110000","011110001100000110000011000001","1000001100000110000011000001100","001110000011000001100000110000","0110000011000001100000110000011","0000011000001100000110000011000","001100001110000011000001100000","1100000111000011000001100000110","000011000001100000110000011000","0011000001100000110000011000001"],"2023":["1100000100000110000111111111100","0000100000110000001000001111","0001100000110000011000000100000","111110011000001100000110000011","0000011000001100000110000011000","001100000110000001000111100000","1100000110000011000001100000110","0000110000011000001100000110000","011000001100000110000001000011","1000001111000110000011000001100","000110000011000001100000110000","0110000011000001100000110000011"],"2024":["1000011000001100000110000011000","00110001111111000100000110010","0110000011000001100000110000011","000111100000110000011000001100","0001100000110000011000001100000","110000011100001100000110000011","0000011000001100000110000011000","0011000001100000110000011000001","100000110000011010001100000110","0000110001011000001100000110000","011000001100000110000011000001","1000001100000110000011000001100"],"2025":["1001100000110000011000001111111","1100000010000011000001100001","1100000110000011000001100000110","001111000001100000110000011000","0011000001100000110000011000011","100000110000011000001100000110","0000110000011000001100000110000","0110000011000001100000110000011","000001100000110000011000001110","0001110001110000011000011100000","110000011000001100000110000011","0000011000001100000110001011000"],"2026":["1011000001100000110000011000001","1000001100000111111111000011","1000001100000110000011000001100","001111000011000001100000110000","1110000011000001100000110000011","000001100000110000111000001100","0001100000110000011000001100000","1100000110000011000001100000110","000011000001100000110000111100","0011000011100000110000011100001","100000110000011000001100000110","0000110000011000001100001110000"]};
 
-        let currentType = 'normal';
-        let currentMode = 'calc';
+        let currentType = 'normal', currentMode = 'calc';
         const weekNames = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
 
-        function switchMode(mode) {
-            currentMode = mode;
-            document.getElementById('section-calc').classList.toggle('hidden', mode !== 'calc');
-            document.getElementById('section-overdue').classList.toggle('hidden', mode !== 'overdue');
-            document.getElementById('tab-calc').className = mode === 'calc' ? 'flex-1 py-4 text-sm font-bold tab-active' : 'flex-1 py-4 text-sm font-bold text-slate-400';
-            document.getElementById('tab-overdue').className = mode === 'overdue' ? 'flex-1 py-4 text-sm font-bold tab-active' : 'flex-1 py-4 text-sm font-bold text-slate-400';
+        function switchMode(m) {
+            currentMode = m;
+            document.getElementById('section-calc').classList.toggle('hidden', m !== 'calc');
+            document.getElementById('section-overdue').classList.toggle('hidden', m !== 'overdue');
+            document.getElementById('tab-calc').className = m === 'calc' ? 'flex-1 py-4 text-sm font-bold tab-active' : 'flex-1 py-4 text-sm font-bold text-slate-400';
+            document.getElementById('tab-overdue').className = m === 'overdue' ? 'flex-1 py-4 text-sm font-bold tab-active' : 'flex-1 py-4 text-sm font-bold text-slate-400';
             document.getElementById('result-area').classList.add('hidden');
         }
 
-        function setType(type) {
-            currentType = type;
-            const isNormal = type === 'normal';
-            document.getElementById('btn-normal').className = isNormal ? 'btn-active flex-1 py-2 rounded-lg text-sm font-bold transition-all' : 'flex-1 py-2 rounded-lg text-sm font-bold text-slate-500 transition-all';
-            document.getElementById('btn-adverse').className = !isNormal ? 'btn-active flex-1 py-2 rounded-lg text-sm font-bold transition-all' : 'flex-1 py-2 rounded-lg text-sm font-bold text-slate-500 transition-all';
-            document.getElementById('type-desc').innerText = isNormal ? "※ 一般案件：末日遇假日順延。" : "※ 不利處分：始日計 1 日，假日照計且不順延。";
+        function setType(t) {
+            currentType = t;
+            document.getElementById('btn-normal').className = t === 'normal' ? 'btn-active flex-1 py-2 rounded-lg text-sm font-bold transition-all' : 'flex-1 py-2 rounded-lg text-sm font-bold text-slate-500';
+            document.getElementById('btn-adverse').className = t === 'adverse' ? 'btn-active flex-1 py-2 rounded-lg text-sm font-bold transition-all' : 'flex-1 py-2 rounded-lg text-sm font-bold text-slate-500';
+            document.getElementById('type-desc').innerText = t === 'normal' ? "※ 一般案件：末日遇假日順延。" : "※ 不利處分：始日計 1 日且不順延。";
         }
 
         function isHoliday(date) {
-            const y = date.getFullYear();
-            const m = date.getMonth();
-            const d = date.getDate();
-            if (HOLIDAY_DATA[y]) {
-                document.getElementById('holiday-warn').classList.add('hidden');
-                return HOLIDAY_DATA[y][m].charAt(d - 1) === "1";
-            } else {
-                document.getElementById('holiday-warn').classList.remove('hidden');
-                const dow = date.getDay();
-                return (dow === 0 || dow === 6);
-            }
+            const y = date.getFullYear(), m = date.getMonth(), d = date.getDate();
+            if (HOLIDAY_DATA[y]) return HOLIDAY_DATA[y][m].charAt(d - 1) === "1";
+            return (date.getDay() === 0 || date.getDay() === 6);
+        }
+
+        // 強制格式化本地日期，徹底解決 toISOString 的時區 Bug
+        function getLocalDateStr(date) {
+            let y = date.getFullYear();
+            let m = ('0' + (date.getMonth() + 1)).slice(-2);
+            let d = ('0' + date.getDate()).slice(-2);
+            return `${y}-${m}-${d}`;
         }
 
         function runCalc() {
-            const startStr = document.getElementById('startDate').value;
-            if (!startStr) return alert("請選擇日期");
-            
-            const period = parseInt(document.getElementById('periodValue').value);
-            const unit = document.getElementById('periodUnit').value;
-            let startDate = new Date(startStr);
-            startDate.setHours(0,0,0,0);
-            
-            let endDate = new Date(startStr);
-            endDate.setHours(0,0,0,0);
-            let detail = "";
+            const s = document.getElementById('startDate').value;
+            if (!s) return;
+            const p = parseInt(document.getElementById('periodValue').value), u = document.getElementById('periodUnit').value;
+            let parts = s.split('-');
+            let start = new Date(parts[0], parts[1]-1, parts[2]);
+            let end = new Date(start);
 
             if (currentType === 'normal') {
-                detail = "一般案件（始日不計）：";
-                if (unit === 'day') endDate.setDate(endDate.getDate() + period);
-                else if (unit === 'month') endDate.setMonth(endDate.getMonth() + period);
-                else endDate.setFullYear(endDate.getFullYear() + period);
-
-                let skipCount = 0;
-                while (isHoliday(endDate)) {
-                    endDate.setDate(endDate.getDate() + 1);
-                    skipCount++;
-                }
-                detail += skipCount > 0 ? `末日逢假日，順延 ${skipCount} 天。` : "末日非假日。";
+                if (u === 'day') end.setDate(end.getDate() + p);
+                else if (u === 'month') end.setMonth(end.getMonth() + p);
+                else end.setFullYear(end.getFullYear() + p);
+                let skip = 0; while (isHoliday(end)) { end.setDate(end.getDate() + 1); skip++; }
+                var detail = `一般案件：始日不計。` + (skip > 0 ? ` 末日逢假日順延 ${skip} 天。` : "");
             } else {
-                detail = "不利處分（始日計 1 日）：";
-                if (unit === 'day') endDate.setDate(endDate.getDate() + (period - 1));
-                else {
-                    if (unit === 'month') endDate.setMonth(endDate.getMonth() + period);
-                    else endDate.setFullYear(endDate.getFullYear() + period);
-                    endDate.setDate(endDate.getDate() - 1);
+                if (u === 'day') end.setDate(end.getDate() + (p - 1));
+                else { 
+                    end.setMonth(end.getMonth() + (u==='month'?p:0)); 
+                    end.setFullYear(end.getFullYear() + (u==='year'?p:0)); 
+                    end.setDate(end.getDate() - 1); 
                 }
-                detail += "假日照計，不予順延。";
+                var detail = "不利處分：始日計入，不順延。";
             }
-
-            // 計算「共幾天」(包含頭尾天數差)
-            const totalDays = Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-
-            showResult(
-                "屆滿日期 (末日)",
-                endDate.toISOString().split('T')[0],
-                weekNames[endDate.getDay()],
-                detail,
-                "blue",
-                `總計：${totalDays} 天`
-            );
+            const total = Math.round((end - start)/864e5) + 1;
+            showResult("屆滿日期 (末日)", getLocalDateStr(end), weekNames[end.getDay()], detail, "blue", `總涵蓋：${total} 天 (含假日)`);
         }
 
         function runOverdue() {
-            const val1 = document.getElementById('date1').value;
-            const val2 = document.getElementById('date2').value;
-            if (!val1 || !val2) return alert("請輸入完整日期");
+            const v1 = document.getElementById('date1').value, v2 = document.getElementById('date2').value;
+            if (!v1 || !v2) return alert("請輸入完整日期");
+            
+            let parts1 = v1.split('-');
+            let parts2 = v2.split('-');
+            let d1 = new Date(parts1[0], parts1[1]-1, parts1[2]);
+            let dead = new Date(parts2[0], parts2[1]-1, parts2[2]);
 
-            let date1 = new Date(val1);
-            let legalDeadline = new Date(val2);
-
+            let legalDead = new Date(dead);
             let skipDesc = "";
+            
             if (currentType === 'normal') {
-                let count = 0;
-                while (isHoliday(legalDeadline)) {
-                    legalDeadline.setDate(legalDeadline.getDate() + 1);
-                    count++;
-                }
-                if (count > 0) skipDesc = `末日適逢假日，法定截止日已順延至 ${legalDeadline.toISOString().split('T')[0]}。`;
+                let cnt = 0;
+                while (isHoliday(legalDead)) { legalDead.setDate(legalDead.getDate() + 1); cnt++; }
+                if (cnt > 0) skipDesc = `原截止日逢假日，順延至 ${getLocalDateStr(legalDead)}。`;
+                else skipDesc = "末日非假日，不順延。";
             } else {
-                skipDesc = "不利處分：末日遇假日不順延。";
+                skipDesc = "不利處分：不順延。";
             }
 
-            date1.setHours(0,0,0,0);
-            legalDeadline.setHours(0,0,0,0);
-            const diffDays = Math.ceil((date1.getTime() - legalDeadline.getTime()) / (1000 * 60 * 60 * 24));
-
-            if (diffDays > 0) {
-                showResult("狀態：逾期中", `${diffDays} 天`, `截止日：${legalDeadline.toISOString().split('T')[0]}`, skipDesc, "rose", "");
+            // 【完全依照您要求：逾期天數必定排除假日計算】
+            if (d1 > legalDead) {
+                let overdueDays = 0;
+                let temp = new Date(legalDead);
+                temp.setDate(temp.getDate() + 1); // 從截止日隔天開始逐日檢查
+                
+                while (temp <= d1) {
+                    if (!isHoliday(temp)) { // 只有工作日才累計逾期天數
+                        overdueDays++;
+                    }
+                    temp.setDate(temp.getDate() + 1);
+                }
+                showResult("狀態：逾期中", `${overdueDays} 天`, `法定截止日：${getLocalDateStr(legalDead)}`, skipDesc + " (已扣除假日，僅計工作日)", "rose", "");
+            
+            } else if (d1 < legalDead) {
+                let remainDays = 0;
+                let temp = new Date(d1);
+                temp.setDate(temp.getDate() + 1);
+                
+                while (temp <= legalDead) {
+                    if (!isHoliday(temp)) remainDays++;
+                    temp.setDate(temp.getDate() + 1);
+                }
+                showResult("狀態：效期內", `剩餘 ${remainDays} 天`, `法定截止日：${getLocalDateStr(legalDead)}`, skipDesc + " (剩餘天數已扣除假日)", "emerald", "");
             } else {
-                showResult("狀態：效期內", `剩餘 ${Math.abs(diffDays)} 天`, `截止日：${legalDeadline.toISOString().split('T')[0]}`, skipDesc, "emerald", "");
+                showResult("狀態：效期內", `今日為最後期限`, `法定截止日：${getLocalDateStr(legalDead)}`, skipDesc, "emerald", "");
             }
         }
 
-        function showResult(title, main, sub, detail, themeColor, totalStr) {
-            const resArea = document.getElementById('result-area');
-            const card = document.getElementById('status-card');
-            resArea.classList.remove('hidden');
-            
-            document.getElementById('res-title').innerText = title;
-            document.getElementById('res-main').innerText = main;
-            document.getElementById('res-sub').innerText = sub;
-            document.getElementById('res-detail').innerText = detail;
-            
-            const totalBox = document.getElementById('res-total-days');
-            if (totalStr) {
-                totalBox.innerText = totalStr;
-                totalBox.classList.remove('hidden');
-            } else {
-                totalBox.classList.add('hidden');
-            }
-
-            const themes = {
-                blue: "bg-blue-50 text-blue-700 border border-blue-100",
-                rose: "bg-rose-50 text-rose-700 border border-rose-100",
-                emerald: "bg-emerald-50 text-emerald-700 border border-emerald-100"
-            };
-            card.className = `p-5 rounded-2xl transition-all ${themes[themeColor]}`;
+        function showResult(t, m, s, d, color, total) {
+            document.getElementById('result-area').classList.remove('hidden');
+            document.getElementById('res-title').innerText = t;
+            document.getElementById('res-main').innerText = m;
+            document.getElementById('res-sub').innerText = s;
+            document.getElementById('res-detail').innerText = d;
+            const tBox = document.getElementById('res-total-days');
+            tBox.innerText = total || ""; tBox.classList.toggle('hidden', !total);
+            const themes = { blue: "bg-blue-50 text-blue-700 border-blue-100", rose: "bg-rose-50 text-rose-700 border-rose-100", emerald: "bg-emerald-50 text-emerald-700 border-emerald-100" };
+            document.getElementById('status-card').className = `p-5 rounded-2xl border ${themes[color]}`;
         }
 
         const today = new Date().toISOString().split('T')[0];
