@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- 版本 1.8 -->
+<!-- 2.0 -->
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
@@ -21,21 +21,21 @@
         <div class="card overflow-hidden border border-slate-200">
             <div class="flex border-b border-slate-100 bg-slate-50/50">
                 <button onclick="switchMode('calc')" id="tab-calc" class="flex-1 py-4 text-sm font-bold text-slate-400 transition-all tab-active">🗓️ 期間計算</button>
-                <button onclick="switchMode('overdue')" id="tab-overdue" class="flex-1 py-4 text-sm font-bold text-slate-400 transition-all">⚠️ 逾期計算</button>
+                <button onclick="switchMode('penalty')" id="tab-penalty" class="flex-1 py-4 text-sm font-bold text-slate-400 transition-all">⚠️ 裁罰期間</button>
             </div>
 
             <div class="p-6">
-                <div class="mb-6">
+                <div id="type-selector" class="mb-6">
                     <label class="block text-xs font-black text-slate-400 mb-2 uppercase tracking-wider">案件性質</label>
                     <div class="flex bg-slate-100 p-1 rounded-xl">
                         <button onclick="setType('normal')" id="btn-normal" class="btn-active flex-1 py-2 rounded-lg text-sm font-bold transition-all">一般案件</button>
                         <button onclick="setType('adverse')" id="btn-adverse" class="flex-1 py-2 rounded-lg text-sm font-bold text-slate-500 transition-all">不利處分</button>
                     </div>
                     <p id="type-desc" class="text-[10px] text-slate-400 mt-2 italic">※ 一般案件：末日遇假日順延。</p>
-                    <p id="type-desc" class="text-[10px] text-slate-400 mt-2 italic">※ 國定假日（2018~2026) 其餘計算六日。</p>
+                    <p class="text-[10px] text-slate-400 mt-1 italic">※ 國定假日（2018~2026) 其餘計算六日。</p>
                 </div>
 
-                <hr class="mb-6 border-slate-100">
+                <hr id="divider" class="mb-6 border-slate-100">
 
                 <div id="section-calc" class="space-y-5">
                     <div>
@@ -59,16 +59,16 @@
                     <button onclick="runCalc()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95">執行計算</button>
                 </div>
 
-                <div id="section-overdue" class="space-y-5 hidden">
+                <div id="section-penalty" class="space-y-5 hidden">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">起算日</label>
+                        <input type="date" id="date-start" class="w-full p-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-500 mb-1">受理裁罰日</label>
-                        <input type="date" id="date1" class="w-full p-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500">
+                        <input type="date" id="date-end" class="w-full p-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 mb-1">停留效期截止日</label>
-                        <input type="date" id="date2" class="w-full p-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    <button onclick="runOverdue()" class="w-full bg-slate-800 hover:bg-black text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95">計算逾期天數</button>
+                    <button onclick="runPenalty()" class="w-full bg-slate-800 hover:bg-black text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95">計算裁罰期間</button>
                 </div>
 
                 <div id="result-area" class="mt-8 hidden border-t border-dashed pt-6">
@@ -77,7 +77,7 @@
                         <div id="res-main" class="text-3xl font-black"></div>
                         <div id="res-sub" class="text-sm font-bold mt-1"></div>
                         <div id="res-total-days" class="text-xs font-bold mt-2 text-slate-600"></div>
-                        <div id="res-detail" class="text-xs mt-3 leading-relaxed opacity-80"></div>
+                        <div id="res-detail" class="text-xs mt-3 leading-relaxed opacity-80 whitespace-pre-wrap"></div>
                     </div>
                 </div>
             </div>
@@ -93,9 +93,14 @@
         function switchMode(m) {
             currentMode = m;
             document.getElementById('section-calc').classList.toggle('hidden', m !== 'calc');
-            document.getElementById('section-overdue').classList.toggle('hidden', m !== 'overdue');
+            document.getElementById('section-penalty').classList.toggle('hidden', m !== 'penalty');
+            
+            // 隱藏/顯示案件性質選擇器
+            document.getElementById('type-selector').classList.toggle('hidden', m !== 'calc');
+            document.getElementById('divider').classList.toggle('hidden', m !== 'calc');
+
             document.getElementById('tab-calc').className = m === 'calc' ? 'flex-1 py-4 text-sm font-bold tab-active' : 'flex-1 py-4 text-sm font-bold text-slate-400';
-            document.getElementById('tab-overdue').className = m === 'overdue' ? 'flex-1 py-4 text-sm font-bold tab-active' : 'flex-1 py-4 text-sm font-bold text-slate-400';
+            document.getElementById('tab-penalty').className = m === 'penalty' ? 'flex-1 py-4 text-sm font-bold tab-active' : 'flex-1 py-4 text-sm font-bold text-slate-400';
             document.getElementById('result-area').classList.add('hidden');
         }
 
@@ -112,7 +117,6 @@
             return (date.getDay() === 0 || date.getDay() === 6);
         }
 
-        // 強制格式化本地日期，徹底解決 toISOString 的時區 Bug
         function getLocalDateStr(date) {
             let y = date.getFullYear();
             let m = ('0' + (date.getMonth() + 1)).slice(-2);
@@ -151,54 +155,73 @@
             showResult("屆滿日期 (末日)", getLocalDateStr(end), weekNames[end.getDay()], detail, "blue", `共計：${total} 天`);
         }
 
-        function runOverdue() {
-            const v1 = document.getElementById('date1').value, v2 = document.getElementById('date2').value;
-            if (!v1 || !v2) return alert("請輸入完整日期");
+        // 取得相當日的輔助函數（處理跨月/月底防呆）
+        function getEquivalentDate(start, addedMonths) {
+            let y = start.getFullYear() + Math.floor((start.getMonth() + addedMonths) / 12);
+            let m = (start.getMonth() + addedMonths) % 12;
+            let d = start.getDate();
             
+            let temp = new Date(y, m, d);
+            // 若該月沒有該日（例如1月31日加1個月變成3月3日），則退回該月最後一天（2月28/29日）
+            if (temp.getMonth() !== m) {
+                temp = new Date(y, m + 1, 0); 
+            }
+            return temp;
+        }
+
+        function runPenalty() {
+            const v1 = document.getElementById('date-start').value;
+            const v2 = document.getElementById('date-end').value;
+            if (!v1 || !v2) return alert("請輸入完整日期");
+
             let parts1 = v1.split('-');
             let parts2 = v2.split('-');
-            let d1 = new Date(parts1[0], parts1[1]-1, parts1[2]);
-            let dead = new Date(parts2[0], parts2[1]-1, parts2[2]);
+            let start = new Date(parts1[0], parts1[1]-1, parts1[2]);
+            let end = new Date(parts2[0], parts2[1]-1, parts2[2]);
 
-            let legalDead = new Date(dead);
-            let skipDesc = "";
-            
-            if (currentType === 'normal') {
-                let cnt = 0;
-                while (isHoliday(legalDead)) { legalDead.setDate(legalDead.getDate() + 1); cnt++; }
-                if (cnt > 0) skipDesc = `原截止日逢假日，順延至 ${getLocalDateStr(legalDead)}。`;
-                else skipDesc = "末日非假日，不順延。";
-            } else {
-                skipDesc = "不利處分：不順延。";
+            if (start > end) {
+                return alert("起算日不能晚於受理裁罰日");
             }
 
-            // 【完全依照您要求：逾期天數必定排除假日計算】
-            if (d1 > legalDead) {
-                let overdueDays = 0;
-                let temp = new Date(legalDead);
-                temp.setDate(temp.getDate() + 1); // 從截止日隔天開始逐日檢查
-                
-                while (temp <= d1) {
-                    if (!isHoliday(temp)) { // 只有工作日才累計逾期天數
-                        overdueDays++;
-                    }
-                    temp.setDate(temp.getDate() + 1);
-                }
-                showResult("狀態：逾期中", `${overdueDays} 天`, `法定截止日：${getLocalDateStr(legalDead)}`, skipDesc + " (已扣除假日，僅計工作日)", "rose", "");
-            
-            } else if (d1 < legalDead) {
-                let remainDays = 0;
-                let temp = new Date(d1);
-                temp.setDate(temp.getDate() + 1);
-                
-                while (temp <= legalDead) {
-                    if (!isHoliday(temp)) remainDays++;
-                    temp.setDate(temp.getDate() + 1);
-                }
-                showResult("狀態：效期內", `剩餘 ${remainDays} 天`, `法定截止日：${getLocalDateStr(legalDead)}`, skipDesc + " (剩餘天數已扣除假日)", "emerald", "");
-            } else {
-                showResult("狀態：效期內", `今日為最後期限`, `法定截止日：${getLocalDateStr(legalDead)}`, skipDesc, "emerald", "");
+            // 先找出最大整月數
+            let totalMonths = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+            let tempDate = getEquivalentDate(start, totalMonths);
+
+            // 若推算的相當日已經超過受理裁罰日，則少算一個月
+            if (tempDate > end) {
+                totalMonths--;
+                tempDate = getEquivalentDate(start, totalMonths);
             }
+
+            let years = Math.floor(totalMonths / 12);
+            let months = totalMonths % 12;
+            
+            // 剩下的日數直接相減（含頭尾故 +1）
+            let remainDays = Math.round((end - tempDate) / 864e5) + 1;
+
+            // 組合主要顯示文字
+            let resStr = "";
+            if (years > 0) resStr += years + "年";
+            if (months > 0) resStr += months + "個月";
+            if (remainDays > 0 || resStr === "") resStr += remainDays + "日";
+
+            // 組合詳細解說文字
+            let detailHtml = "";
+            if (totalMonths > 0) {
+                let endOfPeriod = new Date(tempDate);
+                endOfPeriod.setDate(endOfPeriod.getDate() - 1);
+                
+                detailHtml += `計算期間應自起算日(${start.getMonth()+1}月${start.getDate()}日)相當日(${tempDate.getMonth()+1}月${tempDate.getDate()}日)之前一日(${endOfPeriod.getMonth()+1}月${endOfPeriod.getDate()}日)為期間之末日。\n\n`;
+                detailHtml += `因此，${getLocalDateStr(start)} ～ ${getLocalDateStr(endOfPeriod)} 為${years > 0 ? years + '年' : ''}${months > 0 ? months + '個月' : ''}。\n`;
+                if (remainDays > 0) {
+                    detailHtml += `${getLocalDateStr(tempDate)} ～ ${getLocalDateStr(end)} 計 ${remainDays} 日。`;
+                }
+            } else {
+                detailHtml += `起算日為 ${getLocalDateStr(start)}，至 ${getLocalDateStr(end)}，不足 1 個月。\n`;
+                detailHtml += `共計 ${remainDays} 日。`;
+            }
+
+            showResult("計算結果", resStr, `總計正確為 ${resStr}`, detailHtml, "emerald", "");
         }
 
         function showResult(t, m, s, d, color, total) {
@@ -207,15 +230,23 @@
             document.getElementById('res-main').innerText = m;
             document.getElementById('res-sub').innerText = s;
             document.getElementById('res-detail').innerText = d;
+            
             const tBox = document.getElementById('res-total-days');
-            tBox.innerText = total || ""; tBox.classList.toggle('hidden', !total);
-            const themes = { blue: "bg-blue-50 text-blue-700 border-blue-100", rose: "bg-rose-50 text-rose-700 border-rose-100", emerald: "bg-emerald-50 text-emerald-700 border-emerald-100" };
+            tBox.innerText = total || ""; 
+            tBox.classList.toggle('hidden', !total);
+            
+            const themes = { 
+                blue: "bg-blue-50 text-blue-700 border-blue-100", 
+                rose: "bg-rose-50 text-rose-700 border-rose-100", 
+                emerald: "bg-emerald-50 text-emerald-700 border-emerald-100" 
+            };
             document.getElementById('status-card').className = `p-5 rounded-2xl border ${themes[color]}`;
         }
 
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('startDate').value = today;
-        document.getElementById('date1').value = today;
+        document.getElementById('date-start').value = today;
+        document.getElementById('date-end').value = today;
     </script>
 </body>
 </html>
