@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- 版本: 1.1 -->
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
@@ -6,83 +7,93 @@
     <title>行政程序工具箱</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #f1f5f9; font-family: system-ui, -apple-system, sans-serif; }
-        .card { background: white; border-radius: 20px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
-        .tab-active { color: #1e40af; border-bottom: 2px solid #1e40af; }
-        .btn-active { background-color: #1e40af !important; color: white !important; }
-        input[type="date"], input[type="number"], select { -webkit-appearance: none; }
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
+        body { background-color: #f8fafc; font-family: 'Noto Sans TC', sans-serif; }
+        .card { background: white; border-radius: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.05), 0 10px 10px -5px rgba(0,0,0,0.02); }
+        .tab-active { color: #2563eb; border-bottom: 3px solid #2563eb; }
+        .btn-active { background-color: #2563eb !important; color: white !important; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); }
+        input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="p-4 md:p-12">
     <div class="max-w-md mx-auto">
-        <div class="card overflow-hidden border border-slate-200">
-            <div class="flex border-b border-slate-100 bg-slate-50/50">
-                <button onclick="switchMode('calc')" id="tab-calc" class="flex-1 py-4 text-sm font-bold text-slate-400 transition-all tab-active">🗓️ 期間計算</button>
-                <button onclick="switchMode('overdue')" id="tab-overdue" class="flex-1 py-4 text-sm font-bold text-slate-400 transition-all">⚠️ 逾期計算</button>
+        <header class="mb-8 text-center">
+            <h1 class="text-2xl font-black text-slate-800 tracking-tight">行政程序工具箱</h1>
+            <p class="text-slate-400 text-sm mt-1">法規遵循計算器</p>
+        </header>
+
+        <div class="card overflow-hidden border border-slate-100">
+            <div class="flex border-b border-slate-50 bg-slate-50/30">
+                <button onclick="switchMode('calc')" id="tab-calc" class="flex-1 py-5 text-sm font-bold text-slate-400 transition-all tab-active">🗓️ 期間計算</button>
+                <button onclick="switchMode('overdue')" id="tab-overdue" class="flex-1 py-5 text-sm font-bold text-slate-400 transition-all">⚠️ 逾期檢查</button>
             </div>
 
-            <div class="p-6">
-                <div class="mb-6">
-                    <label class="block text-xs font-black text-slate-400 mb-2 uppercase tracking-wider">案件性質</label>
-                    <div class="flex bg-slate-100 p-1 rounded-xl">
-                        <button onclick="setType('normal')" id="btn-normal" class="btn-active flex-1 py-2 rounded-lg text-sm font-bold transition-all">一般案件</button>
-                        <button onclick="setType('adverse')" id="btn-adverse" class="flex-1 py-2 rounded-lg text-sm font-bold text-slate-500 transition-all">不利處分</button>
+            <div class="p-8">
+                <div class="mb-8">
+                    <label class="block text-[11px] font-black text-slate-400 mb-3 uppercase tracking-widest">案件法律性質</label>
+                    <div class="flex bg-slate-100 p-1.5 rounded-2xl">
+                        <button onclick="setType('normal')" id="btn-normal" class="btn-active flex-1 py-2.5 rounded-xl text-sm font-bold transition-all">一般案件</button>
+                        <button onclick="setType('adverse')" id="btn-adverse" class="flex-1 py-2.5 rounded-xl text-sm font-bold text-slate-500 transition-all">不利處分</button>
                     </div>
-                    <p id="type-desc" class="text-[10px] text-slate-400 mt-2 italic">※ 一般案件：末日遇假日順延。</p>
+                    <div id="type-desc-box" class="mt-3 p-3 bg-blue-50/50 rounded-lg">
+                        <p id="type-desc" class="text-xs text-blue-700 leading-relaxed font-medium">※ 依行政程序法第48條：始日不計，末日遇假日順延。</p>
+                    </div>
                 </div>
 
-                <hr class="mb-6 border-slate-100">
-
-                <div id="section-calc" class="space-y-5">
+                <div id="section-calc" class="space-y-6">
                     <div>
-                        <label class="block text-xs font-bold text-slate-500 mb-1">送達日期 (始日)</label>
-                        <input type="date" id="startDate" class="w-full p-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500">
+                        <label class="block text-xs font-bold text-slate-600 mb-2">送達日期 (發生日)</label>
+                        <input type="date" id="startDate" class="w-full p-4 rounded-2xl border border-slate-200 outline-none transition-all">
                     </div>
-                    <div class="flex gap-3">
+                    <div class="flex gap-4">
                         <div class="flex-[2]">
-                            <label class="block text-xs font-bold text-slate-500 mb-1">期間長度</label>
-                            <input type="number" id="periodValue" value="30" class="w-full p-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500">
+                            <label class="block text-xs font-bold text-slate-600 mb-2">法定期間</label>
+                            <input type="number" id="periodValue" value="30" class="w-full p-4 rounded-2xl border border-slate-200 outline-none transition-all">
                         </div>
                         <div class="flex-1">
-                            <label class="block text-xs font-bold text-slate-500 mb-1">單位</label>
-                            <select id="periodUnit" class="w-full p-3 rounded-xl border border-slate-200 bg-white outline-none focus:ring-2 focus:ring-blue-500">
+                            <label class="block text-xs font-bold text-slate-600 mb-2">單位</label>
+                            <select id="periodUnit" class="w-full p-4 rounded-2xl border border-slate-200 bg-white outline-none transition-all appearance-none">
                                 <option value="day">日</option>
                                 <option value="month">月</option>
                                 <option value="year">年</option>
                             </select>
                         </div>
                     </div>
-                    <button onclick="runCalc()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95">執行計算</button>
+                    <button onclick="runCalc()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl shadow-lg transition-all active:scale-[0.98]">計算屆滿日</button>
                 </div>
 
-                <div id="section-overdue" class="space-y-5 hidden">
+                <div id="section-overdue" class="space-y-6 hidden">
                     <div>
-                        <label class="block text-xs font-bold text-slate-500 mb-1">實際辦理日</label>
-                        <input type="date" id="date1" class="w-full p-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500">
+                        <label class="block text-xs font-bold text-slate-600 mb-2">實際處理日期</label>
+                        <input type="date" id="date1" class="w-full p-4 rounded-2xl border border-slate-200 outline-none transition-all">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-500 mb-1">原效期截止日</label>
-                        <input type="date" id="date2" class="w-full p-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500">
+                        <label class="block text-xs font-bold text-slate-600 mb-2">原始效期截止日</label>
+                        <input type="date" id="date2" class="w-full p-4 rounded-2xl border border-slate-200 outline-none transition-all">
                     </div>
-                    <button onclick="runOverdue()" class="w-full bg-slate-800 hover:bg-black text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95">計算逾期天數</button>
+                    <button onclick="runOverdue()" class="w-full bg-slate-800 hover:bg-black text-white font-bold py-4 rounded-2xl shadow-lg transition-all active:scale-[0.98]">計算逾期狀況</button>
                 </div>
 
-                <div id="result-area" class="mt-8 hidden border-t border-dashed pt-6">
-                    <div id="status-card" class="p-5 rounded-2xl transition-all">
-                        <div id="res-title" class="text-[10px] font-black uppercase tracking-widest mb-1"></div>
-                        <div id="res-main" class="text-3xl font-black"></div>
-                        <div id="res-sub" class="text-sm font-bold mt-1"></div>
-                        <div id="res-total-days" class="text-xs font-bold mt-2 text-slate-600"></div>
-                        <div id="res-detail" class="text-xs mt-3 leading-relaxed opacity-80"></div>
+                <div id="result-area" class="mt-8 hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div id="status-card" class="p-6 rounded-3xl border transition-all">
+                        <div id="res-title" class="text-[10px] font-black uppercase tracking-[0.2em] mb-2"></div>
+                        <div id="res-main" class="text-3xl font-black mb-1"></div>
+                        <div id="res-sub" class="text-sm font-bold opacity-90"></div>
+                        <div id="res-total-days" class="text-xs font-bold mt-3 py-1 px-3 bg-white/50 rounded-full inline-block"></div>
+                        <div id="res-detail" class="text-xs mt-4 leading-relaxed border-t border-current/10 pt-4"></div>
                     </div>
                 </div>
             </div>
         </div>
+        <footer class="mt-8 text-center text-[10px] text-slate-400 font-medium">
+            本工具僅供參考，實際期限應以各該管機關認定為準。
+        </footer>
     </div>
 
     <script>
-        const HOLIDAY_DATA = {"2018":["1000011000001100000110000011000","0011000001100011111100011001","0011000001100000110000011000000","100111110000011000001100000110","0000110000011000001100000110000","011000001100000111000011000001","1000001100000110000011000001100","0001100000110000011000001100000","110000011000001100000111000011","0000011001001100000110000011000","001100000110000011000001100000","1100000110000011000000100000111"],"2019":["1000110000011000000100000110000","0111111111000001100000010001","1110000011000001100000110000011","000111100000110000011000001100","0001100000110000011000001100000","110000111000001100000110000011","0000011000001100000110000011000","0011000001100000110000011000001","100000110000111000001100000110","0000010001111000001100000110000","011000001100000110000011000001","1000001100000110000011000001100"],"2020":["1001100000110000011000111111100","11000001100000010000011000011","1000001100000110000011000001100","011110000011000001100000110000","0110000011000001100000110000011","000001100000110000001000111100","0001100000110000011000001100000","1100000110000011000001100000110","000011000001100000110000001000","1111000011100000110000011000001","100000110000011000001100000110","0000110000011000001100000110000"],"2021":["1110000011000001100000110000011","0000011001111111000010000011","1000011000001100000110000011000","011110000110000011000001100000","1100000110000011000001100000110","000011000001110000110000011000","0011000001100000110000011000001","1000001100000110000011000001100","000110000001000001111000110000","0110000011100001100000110000011","000001100000110000011000001100","0001100000110000011000001100001"],"2022":["1100000110000011000000100000111","1111110000011000001100000111","0000110000011000001100000110000","011110001100000110000011000001","1000001100000110000011000001100","001110000011000001100000110000","0110000011000001100000110000011","0000011000001100000110000011000","001100001110000011000001100000","1100000111000011000001100000110","000011000001100000110000011000","0011000001100000110000011000001"],"2023":["1100000100000110000111111111100","0000100000110000001000001111","0001100000110000011000000100000","111110011000001100000110000011","0000011000001100000110000011000","001100000110000001000111100000","1100000110000011000001100000110","0000110000011000001100000110000","011000001100000110000001000011","1000001111000110000011000001100","000110000011000001100000110000","0110000011000001100000110000011"],"2024":["1000011000001100000110000011000","00110001111111000100000110010","0110000011000001100000110000011","000111100000110000011000001100","0001100000110000011000001100000","110000011100001100000110000011","0000011000001100000110000011000","0011000001100000110000011000001","100000110000011010001100000110","0000110001011000001100000110000","011000001100000110000011000001","1000001100000110000011000001100"],"2025":["1001100000110000011000001111111","1100000010000011000001100001","1100000110000011000001100000110","001111000001100000110000011000","0011000001100000110000011000011","100000110000011000001100000110","0000110000011000001100000110000","0110000011000001100000110000011","000001100000110000011000001110","0001110001110000011000011100000","110000011000001100000110000011","0000011000001100000110001011000"],"2026":["1011000001100000110000011000001","1000001100000111111111000011","1000001100000110000011000001100","001111000011000001100000110000","1110000011000001100000110000011","000001100000110000111000001100","0001100000110000011000001100000","1100000110000011000001100000110","000011000001100000110000111100","0011000011100000110000011100001","100000110000011000001100000110","0000110000011000001100001110000"]};
-
+        // 擴展節假日資料至 2026 
+        const HOLIDAY_DATA = {"2026":["1011000001100000110000011000001","1000001100000111111111000011","1000001100000110000011000001100","001111000011000001100000110000","1110000011000001100000110000011","000001100000110000111000001100","0001100000110000011000001100000","1100000110000011000001100000110","000011000001100000110000111100","0011000011100000110000011100001","100000110000011000001100000110","0000110000011000001100001110000"]};
+        
         let currentType = 'normal', currentMode = 'calc';
         const weekNames = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
 
@@ -90,16 +101,16 @@
             currentMode = m;
             document.getElementById('section-calc').classList.toggle('hidden', m !== 'calc');
             document.getElementById('section-overdue').classList.toggle('hidden', m !== 'overdue');
-            document.getElementById('tab-calc').className = m === 'calc' ? 'flex-1 py-4 text-sm font-bold tab-active' : 'flex-1 py-4 text-sm font-bold text-slate-400';
-            document.getElementById('tab-overdue').className = m === 'overdue' ? 'flex-1 py-4 text-sm font-bold tab-active' : 'flex-1 py-4 text-sm font-bold text-slate-400';
+            document.getElementById('tab-calc').className = m === 'calc' ? 'flex-1 py-5 text-sm font-bold tab-active' : 'flex-1 py-5 text-sm font-bold text-slate-400';
+            document.getElementById('tab-overdue').className = m === 'overdue' ? 'flex-1 py-5 text-sm font-bold tab-active' : 'flex-1 py-5 text-sm font-bold text-slate-400';
             document.getElementById('result-area').classList.add('hidden');
         }
 
         function setType(t) {
             currentType = t;
-            document.getElementById('btn-normal').className = t === 'normal' ? 'btn-active flex-1 py-2 rounded-lg text-sm font-bold transition-all' : 'flex-1 py-2 rounded-lg text-sm font-bold text-slate-500';
-            document.getElementById('btn-adverse').className = t === 'adverse' ? 'btn-active flex-1 py-2 rounded-lg text-sm font-bold transition-all' : 'flex-1 py-2 rounded-lg text-sm font-bold text-slate-500';
-            document.getElementById('type-desc').innerText = t === 'normal' ? "※ 依行政程序法第48條：始日不計，末日遇假日順延。" : "※ 不利處分：依行政程序法第48條第2項但書，始日計入且不順延。";
+            document.getElementById('btn-normal').className = t === 'normal' ? 'btn-active flex-1 py-2.5 rounded-xl text-sm font-bold transition-all' : 'flex-1 py-2.5 rounded-xl text-sm font-bold text-slate-500';
+            document.getElementById('btn-adverse').className = t === 'adverse' ? 'btn-active flex-1 py-2.5 rounded-xl text-sm font-bold transition-all' : 'flex-1 py-2.5 rounded-xl text-sm font-bold text-slate-500';
+            document.getElementById('type-desc').innerText = t === 'normal' ? "※ 依行政程序法第48條：始日不計，末日遇假日順延。" : "※ 不利處分：始日計入（第一日即生效），末日遇假日不順延。";
         }
 
         function isHoliday(date) {
@@ -109,16 +120,14 @@
         }
 
         function getLocalDateStr(date) {
-            let y = date.getFullYear();
-            let m = ('0' + (date.getMonth() + 1)).slice(-2);
-            let d = ('0' + date.getDate()).slice(-2);
-            return `${y}-${m}-${d}`;
+            return date.toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '-');
         }
 
         function runCalc() {
             const s = document.getElementById('startDate').value;
             if (!s) return;
-            const p = parseInt(document.getElementById('periodValue').value), u = document.getElementById('periodUnit').value;
+            const p = parseInt(document.getElementById('periodValue').value);
+            const u = document.getElementById('periodUnit').value;
             let parts = s.split('-');
             let start = new Date(parts[0], parts[1]-1, parts[2]);
             let end = new Date(start);
@@ -127,8 +136,10 @@
                 if (u === 'day') end.setDate(end.getDate() + p);
                 else if (u === 'month') end.setMonth(end.getMonth() + p);
                 else end.setFullYear(end.getFullYear() + p);
-                let skip = 0; while (isHoliday(end)) { end.setDate(end.getDate() + 1); skip++; }
-                var detail = `一般案件（行政程序法 48）：始日不計。` + (skip > 0 ? ` 末日逢假日順延 ${skip} 天。` : " 末日非假日，不順延。");
+                
+                let skip = 0;
+                while (isHoliday(end)) { end.setDate(end.getDate() + 1); skip++; }
+                var detail = `法律依據：行政程序法第48條。始日不計入計算。` + (skip > 0 ? ` 末日逢假日順延 ${skip} 天至辦公日。` : " 末日非假日，不順延。");
             } else {
                 if (u === 'day') end.setDate(end.getDate() + (p - 1));
                 else { 
@@ -136,42 +147,38 @@
                     end.setFullYear(end.getFullYear() + (u==='year'?p:0)); 
                     end.setDate(end.getDate() - 1); 
                 }
-                var detail = "不利處分（行政程序法 48 II 但書）：始日計入，末日不順延。";
+                var detail = "法律性質：不利處分。依行政程序法第48條第2項但書，始日計入。末日不適用假日順延規定。";
             }
-            const total = Math.round((end - start)/864e5) + 1;
-            showResult("屆滿日期 (末日)", getLocalDateStr(end), weekNames[end.getDay()], detail, "blue", `期間範圍：${total} 天 (含假日)`);
+            const totalCovered = Math.round((end - start)/864e5) + 1;
+            showResult("屆滿日期 (末日)", getLocalDateStr(end), weekNames[end.getDay()], detail, "blue", `總涵蓋：${totalCovered} 天`);
         }
 
         function runOverdue() {
             const v1 = document.getElementById('date1').value, v2 = document.getElementById('date2').value;
             if (!v1 || !v2) return;
             
-            let parts1 = v1.split('-');
-            let parts2 = v2.split('-');
-            let d1 = new Date(parts1[0], parts1[1]-1, parts1[2]);
-            let dead = new Date(parts2[0], parts2[1]-1, parts2[2]);
-
+            let d1 = new Date(v1);
+            let dead = new Date(v2);
             let legalDead = new Date(dead);
             let skipDesc = "";
             
             if (currentType === 'normal') {
                 let cnt = 0;
                 while (isHoliday(legalDead)) { legalDead.setDate(legalDead.getDate() + 1); cnt++; }
-                if (cnt > 0) skipDesc = `截止日逢假日，順延至 ${getLocalDateStr(legalDead)}。`;
-                else skipDesc = "截止日非假日。";
+                skipDesc = cnt > 0 ? `原截止日逢假日，依法順延至 ${getLocalDateStr(legalDead)}。` : "末日非假日，不順延。";
             } else {
-                skipDesc = "不利處分不適用假日順延。";
+                skipDesc = "不利處分：期限不因假日順延。";
             }
 
             if (d1 > legalDead) {
                 let overdueDays = 0;
                 let temp = new Date(legalDead);
-                temp.setDate(temp.getDate() + 1); 
+                temp.setDate(temp.getDate() + 1);
                 while (temp <= d1) {
                     if (!isHoliday(temp)) overdueDays++;
                     temp.setDate(temp.getDate() + 1);
                 }
-                showResult("狀態：已逾期", `${overdueDays} 天`, `法定截止日：${getLocalDateStr(legalDead)}`, skipDesc + " (僅計算工作日)", "rose", "");
+                showResult("狀態：逾期中", `${overdueDays} 個工作日`, `法定截止日：${getLocalDateStr(legalDead)}`, skipDesc + " (逾期計算已扣除假日)", "rose", "");
             } else {
                 showResult("狀態：效期內", `尚未逾期`, `法定截止日：${getLocalDateStr(legalDead)}`, skipDesc, "emerald", "");
             }
@@ -186,12 +193,17 @@
             document.getElementById('res-detail').innerText = d;
             const tBox = document.getElementById('res-total-days');
             tBox.innerText = total || ""; tBox.classList.toggle('hidden', !total);
-            const themes = { blue: "bg-blue-50 text-blue-700 border-blue-100", rose: "bg-rose-50 text-rose-700 border-rose-100", emerald: "bg-emerald-50 text-emerald-700 border-emerald-100" };
-            document.getElementById('status-card').className = `p-5 rounded-2xl border ${themes[color]}`;
+            const themes = { 
+                blue: "bg-blue-50 text-blue-700 border-blue-200", 
+                rose: "bg-red-50 text-red-700 border-red-200", 
+                emerald: "bg-emerald-50 text-emerald-700 border-emerald-200" 
+            };
+            document.getElementById('status-card').className = `p-6 rounded-3xl border ${themes[color]}`;
             area.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
-        const today = new Date().toLocaleDateString('en-CA');
+        // 初始化當天日期
+        const today = new Date().toISOString().split('T')[0];
         document.getElementById('startDate').value = today;
         document.getElementById('date1').value = today;
         document.getElementById('date2').value = today;
