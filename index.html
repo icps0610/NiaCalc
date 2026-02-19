@@ -1,4 +1,4 @@
-<!-- 2.5 -->
+<!-- 2.6 -->
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -40,35 +40,33 @@
                 <div id="section-calc" class="space-y-5">
                     <div>
                         <label class="block text-xs font-bold text-slate-500 mb-1">入境日/送達日/裁罰日</label>
-                        <input type="date" id="startDate" class="w-full p-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500">
+                        <input type="date" id="startDate" class="auto-calc w-full p-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                     <div class="flex gap-3">
                         <div class="flex-[2]">
                             <label class="block text-xs font-bold text-slate-500 mb-1">期間</label>
-                            <input type="number" id="periodValue" value="30" class="w-full p-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500">
+                            <input type="number" id="periodValue" value="30" class="auto-calc w-full p-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                         <div class="flex-1">
                             <label class="block text-xs font-bold text-slate-500 mb-1">單位</label>
-                            <select id="periodUnit" class="w-full p-3 rounded-xl border border-slate-200 bg-white outline-none focus:ring-2 focus:ring-blue-500">
+                            <select id="periodUnit" class="auto-calc w-full p-3 rounded-xl border border-slate-200 bg-white outline-none focus:ring-2 focus:ring-blue-500">
                                 <option value="day">日</option>
                                 <option value="month">月</option>
                                 <option value="year">年</option>
                             </select>
                         </div>
                     </div>
-                    <button onclick="runCalc()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95">執行計算</button>
                 </div>
 
                 <div id="section-penalty" class="space-y-5 hidden">
                     <div>
                         <label class="block text-xs font-bold text-slate-500 mb-1">起算日</label>
-                        <input type="date" id="date-start" class="w-full p-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500">
+                        <input type="date" id="date-start" class="auto-penalty w-full p-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-500 mb-1">受理裁罰日</label>
-                        <input type="date" id="date-end" class="w-full p-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500">
+                        <input type="date" id="date-end" class="auto-penalty w-full p-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
-                    <button onclick="runPenalty()" class="w-full bg-slate-800 hover:bg-black text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95">計算裁罰期間</button>
                 </div>
 
                 <div id="result-area" class="mt-8 hidden border-t border-dashed pt-6">
@@ -94,13 +92,14 @@
             currentMode = m;
             document.getElementById('section-calc').classList.toggle('hidden', m !== 'calc');
             document.getElementById('section-penalty').classList.toggle('hidden', m !== 'penalty');
-            
             document.getElementById('type-selector').classList.toggle('hidden', m !== 'calc');
             document.getElementById('divider').classList.toggle('hidden', m !== 'calc');
 
             document.getElementById('tab-calc').className = m === 'calc' ? 'flex-1 py-4 text-sm font-bold tab-active' : 'flex-1 py-4 text-sm font-bold text-slate-400';
             document.getElementById('tab-penalty').className = m === 'penalty' ? 'flex-1 py-4 text-sm font-bold tab-active' : 'flex-1 py-4 text-sm font-bold text-slate-400';
-            document.getElementById('result-area').classList.add('hidden');
+            
+            // 切換時立即重算
+            if (m === 'calc') runCalc(); else runPenalty();
         }
 
         function setType(t) {
@@ -108,6 +107,7 @@
             document.getElementById('btn-normal').className = t === 'normal' ? 'btn-active flex-1 py-2 rounded-lg text-sm font-bold transition-all' : 'flex-1 py-2 rounded-lg text-sm font-bold text-slate-500';
             document.getElementById('btn-adverse').className = t === 'adverse' ? 'btn-active flex-1 py-2 rounded-lg text-sm font-bold transition-all' : 'flex-1 py-2 rounded-lg text-sm font-bold text-slate-500';
             document.getElementById('type-desc').innerText = t === 'normal' ? "※ 一般案件：末日遇假日順延。" : "※ 不利處分：始日計 1 日且不順延。";
+            runCalc();
         }
 
         function isHoliday(date) {
@@ -127,6 +127,8 @@
             const s = document.getElementById('startDate').value;
             if (!s) return;
             const p = parseInt(document.getElementById('periodValue').value), u = document.getElementById('periodUnit').value;
+            if (isNaN(p)) return;
+
             let parts = s.split('-');
             let start = new Date(parts[0], parts[1]-1, parts[2]);
             let end = new Date(start);
@@ -147,9 +149,8 @@
                 var detail = "不利處分：始日計入，不順延。";
             }
             let actualStart = new Date(start);
-            if (currentType === 'normal') {
-                actualStart.setDate(actualStart.getDate() + 1);
-            }
+            if (currentType === 'normal') actualStart.setDate(actualStart.getDate() + 1);
+            
             const total = Math.round((end - actualStart)/864e5) + 1;
             showResult("屆滿日期 (末日)", getLocalDateStr(end), weekNames[end.getDay()], detail, "blue", `共計：${total} 天`);
         }
@@ -158,18 +159,15 @@
             let y = start.getFullYear() + Math.floor((start.getMonth() + addedMonths) / 12);
             let m = (start.getMonth() + addedMonths) % 12;
             let d = start.getDate();
-            
             let temp = new Date(y, m, d);
-            if (temp.getMonth() !== m) {
-                temp = new Date(y, m + 1, 0); 
-            }
+            if (temp.getMonth() !== m) temp = new Date(y, m + 1, 0); 
             return temp;
         }
 
         function runPenalty() {
             const v1 = document.getElementById('date-start').value;
             const v2 = document.getElementById('date-end').value;
-            if (!v1 || !v2) return alert("請輸入完整日期");
+            if (!v1 || !v2) return;
 
             let parts1 = v1.split('-');
             let parts2 = v2.split('-');
@@ -177,33 +175,22 @@
             let end = new Date(parts2[0], parts2[1]-1, parts2[2]);
 
             if (start > end) {
-                return alert("起算日不能晚於受理裁罰日");
+                showResult("錯誤", "日期順序有誤", "", "起算日不可晚於受理日", "rose", "");
+                return;
             }
 
-            // 新增條件：若是最後一天(受理裁罰日)是假日，自動順延
             let originalEndStr = getLocalDateStr(end);
-            let skipDesc = "";
-            let skip = 0;
-            while (isHoliday(end)) {
-                end.setDate(end.getDate() + 1);
-                skip++;
-            }
-            if (skip > 0) {
-                skipDesc = `※ 注意：原受理裁罰日(${originalEndStr})適逢假日，自動順延 ${skip} 天至 ${getLocalDateStr(end)}。\n\n`;
-            }
+            let skipDesc = "", skip = 0;
+            let calcEnd = new Date(end);
+            while (isHoliday(calcEnd)) { calcEnd.setDate(calcEnd.getDate() + 1); skip++; }
+            if (skip > 0) skipDesc = `※ 注意：原受理裁罰日(${originalEndStr})適逢假日，自動順延 ${skip} 天至 ${getLocalDateStr(calcEnd)}。\n\n`;
 
-            let totalMonths = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+            let totalMonths = (calcEnd.getFullYear() - start.getFullYear()) * 12 + (calcEnd.getMonth() - start.getMonth());
             let tempDate = getEquivalentDate(start, totalMonths);
+            if (tempDate > calcEnd) { totalMonths--; tempDate = getEquivalentDate(start, totalMonths); }
 
-            if (tempDate > end) {
-                totalMonths--;
-                tempDate = getEquivalentDate(start, totalMonths);
-            }
-
-            let years = Math.floor(totalMonths / 12);
-            let months = totalMonths % 12;
-            
-            let remainDays = Math.round((end - tempDate) / 864e5) + 1;
+            let years = Math.floor(totalMonths / 12), months = totalMonths % 12;
+            let remainDays = Math.round((calcEnd - tempDate) / 864e5) + 1;
 
             let resStr = "";
             if (years > 0) resStr += years + "年";
@@ -214,43 +201,47 @@
             if (totalMonths > 0) {
                 let endOfPeriod = new Date(tempDate);
                 endOfPeriod.setDate(endOfPeriod.getDate() - 1);
-                
-                detailHtml += `計算期間應自起算日(${start.getMonth()+1}月${start.getDate()}日)相當日(${tempDate.getMonth()+1}月${tempDate.getDate()}日)之前一日(${endOfPeriod.getMonth()+1}月${endOfPeriod.getDate()}日)為期間之末日。\n\n`;
-                detailHtml += `因此，${getLocalDateStr(start)} ～ ${getLocalDateStr(endOfPeriod)} 為${years > 0 ? years + '年' : ''}${months > 0 ? months + '個月' : ''}。\n`;
-                if (remainDays > 0) {
-                    detailHtml += `${getLocalDateStr(tempDate)} ～ ${getLocalDateStr(end)} 計 ${remainDays} 日。`;
-                }
+                detailHtml += `計算期間應自起算日(${start.getMonth()+1}/${start.getDate()})相當日(${tempDate.getMonth()+1}/${tempDate.getDate()})之前一日(${endOfPeriod.getMonth()+1}/${endOfPeriod.getDate()})為期間之末日。\n\n`;
+                detailHtml += `${getLocalDateStr(start)} ～ ${getLocalDateStr(endOfPeriod)} 為 ${years > 0 ? years + '年' : ''}${months > 0 ? months + '個月' : ''}。\n`;
+                if (remainDays > 0) detailHtml += `${getLocalDateStr(tempDate)} ～ ${getLocalDateStr(calcEnd)} 計 ${remainDays} 日。`;
             } else {
-                detailHtml += `起算日為 ${getLocalDateStr(start)}，至 ${getLocalDateStr(end)}，不足 1 個月。\n`;
-                detailHtml += `共計 ${remainDays} 日。`;
+                detailHtml += `起算日為 ${getLocalDateStr(start)}，至 ${getLocalDateStr(calcEnd)}，共計 ${remainDays} 日。`;
             }
-
             showResult("計算結果", resStr, ``, detailHtml, "emerald", "");
         }
 
         function showResult(t, m, s, d, color, total) {
-            document.getElementById('result-area').classList.remove('hidden');
+            const area = document.getElementById('result-area');
+            area.classList.remove('hidden');
             document.getElementById('res-title').innerText = t;
             document.getElementById('res-main').innerText = m;
             document.getElementById('res-sub').innerText = s;
             document.getElementById('res-detail').innerText = d;
-            
             const tBox = document.getElementById('res-total-days');
             tBox.innerText = total || ""; 
             tBox.classList.toggle('hidden', !total);
-            
-            const themes = { 
-                blue: "bg-blue-50 text-blue-700 border-blue-100", 
-                rose: "bg-rose-50 text-rose-700 border-rose-100", 
-                emerald: "bg-emerald-50 text-emerald-700 border-emerald-100" 
-            };
+            const themes = { blue: "bg-blue-50 text-blue-700 border-blue-100", rose: "bg-rose-50 text-rose-700 border-rose-100", emerald: "bg-emerald-50 text-emerald-700 border-emerald-100" };
             document.getElementById('status-card').className = `p-5 rounded-2xl border ${themes[color]}`;
         }
 
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('startDate').value = today;
-        document.getElementById('date-start').value = today;
-        document.getElementById('date-end').value = today;
+        // 初始化與事件綁定
+        window.onload = () => {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('startDate').value = today;
+            document.getElementById('date-start').value = today;
+            document.getElementById('date-end').value = today;
+
+            // 綁定期間計算輸入
+            document.querySelectorAll('.auto-calc').forEach(el => {
+                el.addEventListener('input', runCalc);
+            });
+            // 綁定裁罰計算輸入
+            document.querySelectorAll('.auto-penalty').forEach(el => {
+                el.addEventListener('input', runPenalty);
+            });
+
+            runCalc(); // 初始執行一次
+        };
     </script>
 </body>
 </html>
