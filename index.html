@@ -1,5 +1,5 @@
+<!-- 2.1 -->
 <!DOCTYPE html>
-<!-- 2.0 -->
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
@@ -95,7 +95,6 @@
             document.getElementById('section-calc').classList.toggle('hidden', m !== 'calc');
             document.getElementById('section-penalty').classList.toggle('hidden', m !== 'penalty');
             
-            // 隱藏/顯示案件性質選擇器
             document.getElementById('type-selector').classList.toggle('hidden', m !== 'calc');
             document.getElementById('divider').classList.toggle('hidden', m !== 'calc');
 
@@ -149,20 +148,18 @@
             }
             let actualStart = new Date(start);
             if (currentType === 'normal') {
-                actualStart.setDate(actualStart.getDate() + 1); // 翌日起算
+                actualStart.setDate(actualStart.getDate() + 1);
             }
             const total = Math.round((end - actualStart)/864e5) + 1;
             showResult("屆滿日期 (末日)", getLocalDateStr(end), weekNames[end.getDay()], detail, "blue", `共計：${total} 天`);
         }
 
-        // 取得相當日的輔助函數（處理跨月/月底防呆）
         function getEquivalentDate(start, addedMonths) {
             let y = start.getFullYear() + Math.floor((start.getMonth() + addedMonths) / 12);
             let m = (start.getMonth() + addedMonths) % 12;
             let d = start.getDate();
             
             let temp = new Date(y, m, d);
-            // 若該月沒有該日（例如1月31日加1個月變成3月3日），則退回該月最後一天（2月28/29日）
             if (temp.getMonth() !== m) {
                 temp = new Date(y, m + 1, 0); 
             }
@@ -183,11 +180,21 @@
                 return alert("起算日不能晚於受理裁罰日");
             }
 
-            // 先找出最大整月數
+            // 新增條件：若是最後一天(受理裁罰日)是假日，自動順延
+            let originalEndStr = getLocalDateStr(end);
+            let skipDesc = "";
+            let skip = 0;
+            while (isHoliday(end)) {
+                end.setDate(end.getDate() + 1);
+                skip++;
+            }
+            if (skip > 0) {
+                skipDesc = `※ 注意：原受理裁罰日(${originalEndStr})適逢假日，自動順延 ${skip} 天至 ${getLocalDateStr(end)}。\n\n`;
+            }
+
             let totalMonths = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
             let tempDate = getEquivalentDate(start, totalMonths);
 
-            // 若推算的相當日已經超過受理裁罰日，則少算一個月
             if (tempDate > end) {
                 totalMonths--;
                 tempDate = getEquivalentDate(start, totalMonths);
@@ -196,17 +203,14 @@
             let years = Math.floor(totalMonths / 12);
             let months = totalMonths % 12;
             
-            // 剩下的日數直接相減（含頭尾故 +1）
             let remainDays = Math.round((end - tempDate) / 864e5) + 1;
 
-            // 組合主要顯示文字
             let resStr = "";
             if (years > 0) resStr += years + "年";
             if (months > 0) resStr += months + "個月";
             if (remainDays > 0 || resStr === "") resStr += remainDays + "日";
 
-            // 組合詳細解說文字
-            let detailHtml = "";
+            let detailHtml = skipDesc;
             if (totalMonths > 0) {
                 let endOfPeriod = new Date(tempDate);
                 endOfPeriod.setDate(endOfPeriod.getDate() - 1);
