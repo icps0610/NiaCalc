@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>行政程序計算</title>
     
-    <style>  /* v3.0 */
+    <style>  /* v3.1 */
         body { background-color: #f1f5f9; font-family: system-ui, -apple-system, sans-serif; }
         .card { background: white; border-radius: 20px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
         .tab-active { color: #1e40af; border-bottom: 2px solid #1e40af; }
@@ -191,7 +191,7 @@
             let y = date.getFullYear();
             let m = ('0' + (date.getMonth() + 1)).slice(-2);
             let d = ('0' + date.getDate()).slice(-2);
-            if (yearMode === 'ROC') return `民國 ${y - 1911} 年 ${m} 月 ${d} 日`;
+            if (yearMode === 'ROC') return `${y - 1911} 年 ${m} 月 ${d} 日`;
             return `${y}-${m}-${d}`;
         }
 
