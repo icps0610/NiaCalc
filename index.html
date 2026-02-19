@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!-- 版本: 1.0 -->
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
@@ -58,11 +57,11 @@
 
                 <div id="section-overdue" class="space-y-5 hidden">
                     <div>
-                        <label class="block text-xs font-bold text-slate-500 mb-1">裁罰的當日</label>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">實際辦理日</label>
                         <input type="date" id="date1" class="w-full p-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-500 mb-1">停留效期截止日</label>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">原效期截止日</label>
                         <input type="date" id="date2" class="w-full p-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                     <button onclick="runOverdue()" class="w-full bg-slate-800 hover:bg-black text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95">計算逾期天數</button>
@@ -100,7 +99,7 @@
             currentType = t;
             document.getElementById('btn-normal').className = t === 'normal' ? 'btn-active flex-1 py-2 rounded-lg text-sm font-bold transition-all' : 'flex-1 py-2 rounded-lg text-sm font-bold text-slate-500';
             document.getElementById('btn-adverse').className = t === 'adverse' ? 'btn-active flex-1 py-2 rounded-lg text-sm font-bold transition-all' : 'flex-1 py-2 rounded-lg text-sm font-bold text-slate-500';
-            document.getElementById('type-desc').innerText = t === 'normal' ? "※ 一般案件：末日遇假日順延。" : "※ 不利處分：始日計 1 日且不順延。";
+            document.getElementById('type-desc').innerText = t === 'normal' ? "※ 依行政程序法第48條：始日不計，末日遇假日順延。" : "※ 不利處分：依行政程序法第48條第2項但書，始日計入且不順延。";
         }
 
         function isHoliday(date) {
@@ -109,7 +108,6 @@
             return (date.getDay() === 0 || date.getDay() === 6);
         }
 
-        // 強制格式化本地日期，徹底解決 toISOString 的時區 Bug
         function getLocalDateStr(date) {
             let y = date.getFullYear();
             let m = ('0' + (date.getMonth() + 1)).slice(-2);
@@ -130,7 +128,7 @@
                 else if (u === 'month') end.setMonth(end.getMonth() + p);
                 else end.setFullYear(end.getFullYear() + p);
                 let skip = 0; while (isHoliday(end)) { end.setDate(end.getDate() + 1); skip++; }
-                var detail = `一般案件：始日不計。` + (skip > 0 ? ` 末日逢假日順延 ${skip} 天。` : "");
+                var detail = `一般案件（行政程序法 48）：始日不計。` + (skip > 0 ? ` 末日逢假日順延 ${skip} 天。` : " 末日非假日，不順延。");
             } else {
                 if (u === 'day') end.setDate(end.getDate() + (p - 1));
                 else { 
@@ -138,15 +136,15 @@
                     end.setFullYear(end.getFullYear() + (u==='year'?p:0)); 
                     end.setDate(end.getDate() - 1); 
                 }
-                var detail = "不利處分：始日計入，不順延。";
+                var detail = "不利處分（行政程序法 48 II 但書）：始日計入，末日不順延。";
             }
             const total = Math.round((end - start)/864e5) + 1;
-            showResult("屆滿日期 (末日)", getLocalDateStr(end), weekNames[end.getDay()], detail, "blue", `總涵蓋：${total} 天 (含假日)`);
+            showResult("屆滿日期 (末日)", getLocalDateStr(end), weekNames[end.getDay()], detail, "blue", `期間範圍：${total} 天 (含假日)`);
         }
 
         function runOverdue() {
             const v1 = document.getElementById('date1').value, v2 = document.getElementById('date2').value;
-            if (!v1 || !v2) return alert("請輸入完整日期");
+            if (!v1 || !v2) return;
             
             let parts1 = v1.split('-');
             let parts2 = v2.split('-');
@@ -159,43 +157,29 @@
             if (currentType === 'normal') {
                 let cnt = 0;
                 while (isHoliday(legalDead)) { legalDead.setDate(legalDead.getDate() + 1); cnt++; }
-                if (cnt > 0) skipDesc = `原截止日逢假日，順延至 ${getLocalDateStr(legalDead)}。`;
-                else skipDesc = "末日非假日，不順延。";
+                if (cnt > 0) skipDesc = `截止日逢假日，順延至 ${getLocalDateStr(legalDead)}。`;
+                else skipDesc = "截止日非假日。";
             } else {
-                skipDesc = "不利處分：不順延。";
+                skipDesc = "不利處分不適用假日順延。";
             }
 
-            // 【完全依照您要求：逾期天數必定排除假日計算】
             if (d1 > legalDead) {
                 let overdueDays = 0;
                 let temp = new Date(legalDead);
-                temp.setDate(temp.getDate() + 1); // 從截止日隔天開始逐日檢查
-                
+                temp.setDate(temp.getDate() + 1); 
                 while (temp <= d1) {
-                    if (!isHoliday(temp)) { // 只有工作日才累計逾期天數
-                        overdueDays++;
-                    }
+                    if (!isHoliday(temp)) overdueDays++;
                     temp.setDate(temp.getDate() + 1);
                 }
-                showResult("狀態：逾期中", `${overdueDays} 天`, `法定截止日：${getLocalDateStr(legalDead)}`, skipDesc + " (已扣除假日，僅計工作日)", "rose", "");
-            
-            } else if (d1 < legalDead) {
-                let remainDays = 0;
-                let temp = new Date(d1);
-                temp.setDate(temp.getDate() + 1);
-                
-                while (temp <= legalDead) {
-                    if (!isHoliday(temp)) remainDays++;
-                    temp.setDate(temp.getDate() + 1);
-                }
-                showResult("狀態：效期內", `剩餘 ${remainDays} 天`, `法定截止日：${getLocalDateStr(legalDead)}`, skipDesc + " (剩餘天數已扣除假日)", "emerald", "");
+                showResult("狀態：已逾期", `${overdueDays} 天`, `法定截止日：${getLocalDateStr(legalDead)}`, skipDesc + " (僅計算工作日)", "rose", "");
             } else {
-                showResult("狀態：效期內", `今日為最後期限`, `法定截止日：${getLocalDateStr(legalDead)}`, skipDesc, "emerald", "");
+                showResult("狀態：效期內", `尚未逾期`, `法定截止日：${getLocalDateStr(legalDead)}`, skipDesc, "emerald", "");
             }
         }
 
         function showResult(t, m, s, d, color, total) {
-            document.getElementById('result-area').classList.remove('hidden');
+            const area = document.getElementById('result-area');
+            area.classList.remove('hidden');
             document.getElementById('res-title').innerText = t;
             document.getElementById('res-main').innerText = m;
             document.getElementById('res-sub').innerText = s;
@@ -204,11 +188,13 @@
             tBox.innerText = total || ""; tBox.classList.toggle('hidden', !total);
             const themes = { blue: "bg-blue-50 text-blue-700 border-blue-100", rose: "bg-rose-50 text-rose-700 border-rose-100", emerald: "bg-emerald-50 text-emerald-700 border-emerald-100" };
             document.getElementById('status-card').className = `p-5 rounded-2xl border ${themes[color]}`;
+            area.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
-        const today = new Date().toISOString().split('T')[0];
+        const today = new Date().toLocaleDateString('en-CA');
         document.getElementById('startDate').value = today;
         document.getElementById('date1').value = today;
+        document.getElementById('date2').value = today;
     </script>
 </body>
 </html>
