@@ -1,12 +1,13 @@
 <!DOCTYPE html>
-<!-- 版本 1.4 -->
+<!-- 版本 1.5 -->
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHJlY3Qgd2lkdGg9IjE4IiBoZWlnaHQ9IjE4IHg9IjMiIHk9IjMiIGZpbGw9IiMxZTQwYWYiIHJ4PSI0Ii8+PHJlY3Qgd2lkdGg9IjE0IiBoZWlnaHQ9IjQiIHg9IjUiIHk9IjYiIGZpbGw9IiNmZmYiIHJ4PSIxIi8+PGNpcmNsZSBjeD0iNyIgY3k9IjEzIiByPSIxIiBmaWxsPSIjZmZmIi8+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMyIgcj0iMSIgZmlsbD0iI2ZmZiIvPjxjaXJjbGUgY3g9IjE3IiBjeT0iMTMiIHI9IjEiIGZpbGw9IiNmZmYiLz48Y2lyY2xlIGN4PSI3IiBjeT0iMTciIHI9IjEiIGZpbGw9IiNmZmYiLz48Y2lyY2xlIGN4PSIxMiIgY3k9IjE3IiByPSIxIiBmaWxsPSIjZmZmIi8+PHJlY3Qgd2lkdGg9IjQiIGhlaWdodD0iMSIgeD0iMTUiIHk9IjE2LjUiIGZpbGw9IiNmZmYiIHJ4PSIwLjUiLz48cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSIxIiB4PSIxNSIgeT0iMTguNSIgZmlsbD0iI2ZmZiIgcng9IjAuNSIvPjwvc3ZnPg==">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" type="image/png" href="http://googleusercontent.com/image_collection/image_retrieval/15020141570556557327_0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>行政程序工具箱</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    
     <style>
         body { background-color: #f1f5f9; font-family: system-ui, -apple-system, sans-serif; }
         .card { background: white; border-radius: 20px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
@@ -142,7 +143,11 @@
                 }
                 var detail = "不利處分：始日計入，不順延。";
             }
-            const total = Math.round((end - start)/864e5) + 1;
+            let actualStart = new Date(start);
+            if (currentType === 'normal') {
+                actualStart.setDate(actualStart.getDate() + 1); // 翌日起算
+            }
+            const total = Math.round((end - actualStart)/864e5) + 1;
             showResult("屆滿日期 (末日)", getLocalDateStr(end), weekNames[end.getDay()], detail, "blue", `共計：${total} 天`);
         }
 
