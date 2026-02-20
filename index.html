@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEMAAABDCAMAAADwFEhBAAAAAXNSR0IB2cksfwAAAAlwSFlzAAAOxAAADsQBlSsOGwAAAMNQTFRF////////AAAA////////////////////2traq6urqqqq29vb////////tra2BgYGAAAAAAAABwcHu7u7////TExMAAAAAAAAAAAAaWlp////REREZmZmPz8/VVVVu7u7////fX19qqqqZmZmmZmZd3d3iIiI9vb27u7u+Pj4/v7+ERERkJCQgICAiYmJIiIimJiYMzMzAAAAb29v////AAAAAAAADg4O0dHR////29vbrKys5eXl////////////////qYDyEQAAAEF0Uk5TjlUADx8vCSZRdINPJAdfpsnZo1xBl+z/6pVAqqr////////////////////////////jjjjYyJ1VHVFySGR0g3JhKh49AAABA0lEQVR4nO3YTwuCMBQA8D1R0wqDvNW1LxBd+/hdutSnKDpWVv4pWTOmRZPca0aCezAZOH9uc8pzQIAoBgUojJdq9XWUlhgmoAwD4CwYVgdpxBfBGGKIx8B3gkFHNwTB+r3Jb/lm2HJdockHw5E0Im1o449GHWsdEY03unLzASf152IGbTKsIyGDhDcIWXF53T4Q4l1bZ1SHNtpsdNgBQt7AYSXidZflcTSWMoR16vPMS2WtN8HoZae40WfzYQR4ozS0oY0ajaa8L18aXvYN2qsZ1aENhCGZr/vb3+XJyH/1McBKMFB7BpNsk2IpGCbM1vIdmUKaE8x47sPMEYOBdFHU6R0/upyUkJQ0iwAAAABJRU5ErkJggg==">
     <title>行政程序與裁罰計算系統</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -197,14 +199,14 @@
                 </div>
 
                 <div id="section-matsu" class="hidden space-y-4">
-                    <div class="flex justify-between items-end mb-2">
-                        <div>
+                    <div class="mb-3">
+                        <div class="flex items-center justify-between">
                             <h2 class="text-[11px] font-black text-slate-400 uppercase tracking-widest">今日即時預報</h2>
-                            <p class="text-xs text-slate-500 mt-1 font-semibold" id="matsu-updateTime">狀態：初始化中...</p>
+<!--                             <button onclick="fetchMatsuData(true)" class="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors">
+                                重新整理
+                            </button> -->
                         </div>
-                        <div id="matsu-countdown" class="text-[10px] font-mono bg-blue-50 text-blue-700 px-2.5 py-1 rounded-md border border-blue-100 shadow-sm font-bold">
-                            載入中...
-                        </div>
+                        <p class="text-[11px] text-slate-500 mt-1 font-semibold" id="matsu-updateTime">狀態：初始化中...</p>
                     </div>
 
                     <div id="matsu-resultArea" class="space-y-4 mt-2">
@@ -637,43 +639,62 @@
         }
 
 
-        // ---- 小三通即時看板邏輯 ----
+        // ---- 小三通即時看板邏輯 (LocalStorage 1分鐘快取) ----
         let matsuInitialized = false;
-        let matsuTimeLeft = 300;
-        let matsuTimer = null;
+        const CACHE_KEY = 'matsu_ferry_data';
+        const CACHE_TIME_KEY = 'matsu_ferry_time';
+        const CACHE_EXPIRY = 60 * 1000; // 1 分鐘 (毫秒)
 
         function initMatsuDashboard() {
-            fetchMatsuData();
-            matsuTimer = setInterval(() => {
-                matsuTimeLeft--;
-                const mins = Math.floor(matsuTimeLeft / 60);
-                const secs = matsuTimeLeft % 60;
-                document.getElementById('matsu-countdown').textContent = `更新倒數：${mins}:${secs.toString().padStart(2, '0')}`;
-                
-                if (matsuTimeLeft <= 0) {
-                    fetchMatsuData();
-                }
-            }, 1000);
+            fetchMatsuData(false);
         }
 
-        async function fetchMatsuData() {
+        async function fetchMatsuData(forceRefresh = false) {
             const updateTimeLabel = document.getElementById('matsu-updateTime');
             const resultArea = document.getElementById('matsu-resultArea');
-            updateTimeLabel.textContent = '狀態：正在更新資料...';
+            const now = new Date().getTime();
+
+            // 如果不是強制刷新，則檢查 localStorage
+            if (!forceRefresh) {
+                const cachedData = localStorage.getItem(CACHE_KEY);
+                const cachedTime = localStorage.getItem(CACHE_TIME_KEY);
+
+                if (cachedData && cachedTime && (now - parseInt(cachedTime) < CACHE_EXPIRY)) {
+                    const cacheDate = new Date(parseInt(cachedTime));
+                    const timeStr = `${cacheDate.getHours().toString().padStart(2, '0')}:${cacheDate.getMinutes().toString().padStart(2, '0')}:${cacheDate.getSeconds().toString().padStart(2, '0')}`;
+                    updateTimeLabel.textContent = `狀態：讀取本地快取 (${timeStr})`;
+                    parseMatsuData(cachedData, resultArea);
+                    return;
+                }
+            }
+
+            // 無快取、已過期，或使用者點擊「重新整理」
+            updateTimeLabel.textContent = '狀態：正在連線抓取最新資料...';
+            // 顯示 Loading
+            resultArea.innerHTML = `
+                <div class="flex flex-col items-center justify-center py-16 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                    <div class="loading-ring w-10 h-10 border-4 border-slate-200 rounded-full mb-3"></div>
+                    <p class="text-xs font-bold text-slate-400 animate-pulse">連線至港務系統中...</p>
+                </div>
+            `;
             
             try {
                 const targetUrl = 'https://port.mtha.gov.tw/MOBWeb/PortVesselList';
                 const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
                 const response = await fetch(proxyUrl);
                 
-                if (!response.ok) throw new Error('連線中斷');
+                if (!response.ok) throw new Error('伺服器連線中斷或阻擋');
                 
                 const html = await response.text();
+                
+                // 寫入 localStorage 
+                localStorage.setItem(CACHE_KEY, html);
+                localStorage.setItem(CACHE_TIME_KEY, now.toString());
+
                 parseMatsuData(html, resultArea);
                 
-                const now = new Date();
-                updateTimeLabel.textContent = `最後更新：${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
-                matsuTimeLeft = 300; // 成功後重置5分鐘倒數
+                const freshDate = new Date();
+                updateTimeLabel.textContent = `狀態：取得最新資料 (${freshDate.getHours().toString().padStart(2, '0')}:${freshDate.getMinutes().toString().padStart(2, '0')}:${freshDate.getSeconds().toString().padStart(2, '0')})`;
             } catch (err) {
                 updateTimeLabel.textContent = '狀態：更新失敗';
                 resultArea.innerHTML = `<div class="p-6 text-center text-rose-500 bg-rose-50 rounded-2xl border border-rose-100 text-sm font-bold">無法取得船班資料：${err.message}</div>`;
@@ -722,7 +743,6 @@
                     }
                 }
 
-                // 套用與計算結果卡片相仿的 UI 風格
                 finalHtml += `
                     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden h-fit">
                         <div class="bg-blue-800 text-white px-5 py-3 flex justify-between items-center">
@@ -750,7 +770,7 @@
                     HOLIDAY_DATA = await response.json();
                 }
             } catch (error) {
-                console.warn("未載入 holiday.json 國定假日檔案，將僅判斷週末");
+                // Ignore missing JSON
             }
 
             const today = new Date();
@@ -780,5 +800,5 @@
             setYearMode('ROC');
         });
     </script>
-</body version="4.0">
+</body version="5.1">
 </html>
