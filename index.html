@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-TW" version="3.4">
+<html lang="zh-TW" version="3.5">
 
 <head>
     <meta charset="UTF-8">
@@ -320,33 +320,40 @@
         }
 
         function syncDate(id, source) {
+            const yEl = document.getElementById(id + '_' + source.toLowerCase() + '_y');
+            const mEl = document.getElementById(id + '_' + source.toLowerCase() + '_m');
+            const dEl = document.getElementById(id + '_' + source.toLowerCase() + '_d');
+            
+            if (!yEl || !mEl || !dEl) return;
+
+            const y = parseInt(yEl.value);
+            const m = parseInt(mEl.value);
+            const d = parseInt(dEl.value);
+
+            // 如果任一欄位空白，清空隱藏欄位並隱藏結果
+            if (isNaN(y) || isNaN(m) || isNaN(d)) {
+                document.getElementById(id).value = '';
+                document.getElementById('result-area').classList.add('hidden');
+                return;
+            }
+
             if (source === 'CE') {
-                const y = parseInt(document.getElementById(id + '_ce_y').value);
-                const m = parseInt(document.getElementById(id + '_ce_m').value);
-                const d = parseInt(document.getElementById(id + '_ce_d').value);
-                if (y && m && d) {
-                    const ceM = ('0' + m).slice(-2);
-                    const ceD = ('0' + d).slice(-2);
-                    document.getElementById(id).value = `${y}-${ceM}-${ceD}`;
+                const ceM = ('0' + m).slice(-2);
+                const ceD = ('0' + d).slice(-2);
+                document.getElementById(id).value = `${y}-${ceM}-${ceD}`;
 
-                    document.getElementById(id + '_roc_y').value = y - 1911;
-                    document.getElementById(id + '_roc_m').value = m;
-                    document.getElementById(id + '_roc_d').value = d;
-                }
+                document.getElementById(id + '_roc_y').value = y - 1911;
+                document.getElementById(id + '_roc_m').value = m;
+                document.getElementById(id + '_roc_d').value = d;
             } else {
-                const y = parseInt(document.getElementById(id + '_roc_y').value);
-                const m = parseInt(document.getElementById(id + '_roc_m').value);
-                const d = parseInt(document.getElementById(id + '_roc_d').value);
-                if (y && m && d) {
-                    const ceY = y + 1911;
-                    const ceM = ('0' + m).slice(-2);
-                    const ceD = ('0' + d).slice(-2);
-                    document.getElementById(id).value = `${ceY}-${ceM}-${ceD}`;
+                const ceY = y + 1911;
+                const ceM = ('0' + m).slice(-2);
+                const ceD = ('0' + d).slice(-2);
+                document.getElementById(id).value = `${ceY}-${ceM}-${ceD}`;
 
-                    document.getElementById(id + '_ce_y').value = ceY;
-                    document.getElementById(id + '_ce_m').value = m;
-                    document.getElementById(id + '_ce_d').value = d;
-                }
+                document.getElementById(id + '_ce_y').value = ceY;
+                document.getElementById(id + '_ce_m').value = m;
+                document.getElementById(id + '_ce_d').value = d;
             }
         }
 
@@ -397,6 +404,15 @@
             return date;
         }
 
+        function getEquivalentDate(start, addedMonths) {
+            let y = start.getFullYear() + Math.floor((start.getMonth() + addedMonths) / 12);
+            let m = (start.getMonth() + addedMonths) % 12;
+            let d = start.getDate();
+            let temp = new Date(y, m, d);
+            if (temp.getMonth() !== m) temp = new Date(y, m + 1, 0);
+            return temp;
+        }
+
         function runCalc() {
             const s = document.getElementById('startDate').value;
             if (!s) return;
@@ -405,24 +421,33 @@
             if (isNaN(p)) return;
 
             const start = parseDate(s);
-            if (!start) return;
-            const end = new Date(start);
-
-            // 使用 let 宣告，避免 var 提升造成的歧義
+            if (!start) {
+                document.getElementById('result-area').classList.add('hidden');
+                return;
+            }
+            
+            let end;
             let detail;
+
             if (currentType === 'normal') {
-                if (u === 'day') end.setDate(end.getDate() + p);
-                else if (u === 'month') end.setMonth(end.getMonth() + p);
-                else end.setFullYear(end.getFullYear() + p);
+                if (u === 'day') {
+                    end = new Date(start);
+                    end.setDate(end.getDate() + p);
+                } else if (u === 'month') {
+                    end = getEquivalentDate(start, p);
+                } else {
+                    end = getEquivalentDate(start, p * 12);
+                }
+                
                 let skip = 0;
                 while (isHoliday(end)) { end.setDate(end.getDate() + 1); skip++; }
                 detail = `一般案件：始日不計。` + (skip > 0 ? ` 末日逢假日順延 ${skip} 天。` : "");
             } else {
                 if (u === 'day') {
+                    end = new Date(start);
                     end.setDate(end.getDate() + (p - 1));
                 } else {
-                    end.setMonth(end.getMonth() + (u === 'month' ? p : 0));
-                    end.setFullYear(end.getFullYear() + (u === 'year' ? p : 0));
+                    end = getEquivalentDate(start, u === 'month' ? p : p * 12);
                     end.setDate(end.getDate() - 1);
                 }
                 detail = "不利處分：始日計入，不順延。";
@@ -433,15 +458,6 @@
 
             const total = Math.round((end - actualStart) / 864e5) + 1;
             showResult("屆滿日期 (末日)", getLocalDateStr(end) + `, 共 ${total} 日`, weekNames[end.getDay()], detail, "blue", ``);
-        }
-
-        function getEquivalentDate(start, addedMonths) {
-            let y = start.getFullYear() + Math.floor((start.getMonth() + addedMonths) / 12);
-            let m = (start.getMonth() + addedMonths) % 12;
-            let d = start.getDate();
-            let temp = new Date(y, m, d);
-            if (temp.getMonth() !== m) temp = new Date(y, m + 1, 0);
-            return temp;
         }
 
         function runPenalty() {
