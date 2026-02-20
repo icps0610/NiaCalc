@@ -7,18 +7,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>行政程序計算</title>
     
-    <style>  /* v3.1 */
+    <style>  /* v3.2 */
         body { background-color: #f1f5f9; font-family: system-ui, -apple-system, sans-serif; }
         .card { background: white; border-radius: 20px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
         .tab-active { color: #1e40af; border-bottom: 2px solid #1e40af; }
         .btn-active { background-color: #1e40af !important; color: white !important; }
-        input[type="date"], select { -webkit-appearance: none; }
+        select { -webkit-appearance: none; }
         input[type="number"]::-webkit-outer-spin-button,
         input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         input[type="number"] { -moz-appearance: textfield; }
+        
+        /* 月曆彈窗動畫 */
+        .modal-enter { opacity: 0; transform: translateY(-10px); }
+        .modal-enter-active { opacity: 1; transform: translateY(0); transition: opacity 0.2s, transform 0.2s; }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="p-4 md:p-8 relative">
     <div class="max-w-md mx-auto">
         <div class="card overflow-hidden border border-slate-200">
             <div class="flex border-b border-slate-100 bg-slate-50/50 relative">
@@ -49,7 +53,20 @@
                 <div id="section-calc" class="space-y-5">
                     <div>
                         <label class="block text-xs font-bold text-slate-500 mb-1">入境日</label>
-                        <input type="date" id="startDate" class="auto-calc w-full p-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500">
+                        <input type="hidden" id="startDate" class="auto-calc">
+                        
+                        <div id="startDate_ce_group" class="hidden flex items-center border border-slate-200 rounded-xl bg-white overflow-hidden w-full focus-within:ring-2 focus-within:ring-blue-500">
+                            <span class="pl-3 text-slate-400 text-sm font-bold whitespace-nowrap">西元</span>
+                            <input type="number" id="startDate_ce_y" class="auto-calc-ce w-full p-3 outline-none text-center" placeholder="年">
+                            <span class="text-slate-200">/</span>
+                            <input type="number" id="startDate_ce_m" class="auto-calc-ce w-full p-3 outline-none text-center" placeholder="月">
+                            <span class="text-slate-200">/</span>
+                            <input type="number" id="startDate_ce_d" class="auto-calc-ce w-full p-3 outline-none text-center" placeholder="日">
+                            <button onclick="openCalendar('startDate_ce')" class="px-3 py-3 text-slate-400 hover:text-blue-600 bg-slate-50 border-l border-slate-100 transition-colors">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            </button>
+                        </div>
+
                         <div id="startDate_roc_group" class="hidden flex items-center border border-slate-200 rounded-xl bg-white overflow-hidden w-full focus-within:ring-2 focus-within:ring-blue-500">
                             <span class="pl-3 text-slate-400 text-sm font-bold whitespace-nowrap">民國</span>
                             <input type="number" id="startDate_roc_y" class="auto-calc-roc w-full p-3 outline-none text-center" placeholder="年">
@@ -57,6 +74,9 @@
                             <input type="number" id="startDate_roc_m" class="auto-calc-roc w-full p-3 outline-none text-center" placeholder="月">
                             <span class="text-slate-200">/</span>
                             <input type="number" id="startDate_roc_d" class="auto-calc-roc w-full p-3 outline-none text-center" placeholder="日">
+                            <button onclick="openCalendar('startDate_roc')" class="px-3 py-3 text-slate-400 hover:text-blue-600 bg-slate-50 border-l border-slate-100 transition-colors">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            </button>
                         </div>
                     </div>
                     <div class="flex gap-3">
@@ -78,7 +98,20 @@
                 <div id="section-penalty" class="space-y-5 hidden">
                     <div>
                         <label class="block text-xs font-bold text-slate-500 mb-1">裁罰起算日</label>
-                        <input type="date" id="date-start" class="auto-penalty w-full p-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500">
+                        <input type="hidden" id="date-start" class="auto-penalty">
+                        
+                        <div id="date-start_ce_group" class="hidden flex items-center border border-slate-200 rounded-xl bg-white overflow-hidden w-full focus-within:ring-2 focus-within:ring-blue-500">
+                            <span class="pl-3 text-slate-400 text-sm font-bold whitespace-nowrap">西元</span>
+                            <input type="number" id="date-start_ce_y" class="auto-penalty-ce w-full p-3 outline-none text-center" placeholder="年">
+                            <span class="text-slate-200">/</span>
+                            <input type="number" id="date-start_ce_m" class="auto-penalty-ce w-full p-3 outline-none text-center" placeholder="月">
+                            <span class="text-slate-200">/</span>
+                            <input type="number" id="date-start_ce_d" class="auto-penalty-ce w-full p-3 outline-none text-center" placeholder="日">
+                            <button onclick="openCalendar('date-start_ce')" class="px-3 py-3 text-slate-400 hover:text-blue-600 bg-slate-50 border-l border-slate-100 transition-colors">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            </button>
+                        </div>
+
                         <div id="date-start_roc_group" class="hidden flex items-center border border-slate-200 rounded-xl bg-white overflow-hidden w-full focus-within:ring-2 focus-within:ring-blue-500">
                             <span class="pl-3 text-slate-400 text-sm font-bold whitespace-nowrap">民國</span>
                             <input type="number" id="date-start_roc_y" class="auto-penalty-roc w-full p-3 outline-none text-center" placeholder="年">
@@ -86,11 +119,27 @@
                             <input type="number" id="date-start_roc_m" class="auto-penalty-roc w-full p-3 outline-none text-center" placeholder="月">
                             <span class="text-slate-200">/</span>
                             <input type="number" id="date-start_roc_d" class="auto-penalty-roc w-full p-3 outline-none text-center" placeholder="日">
+                            <button onclick="openCalendar('date-start_roc')" class="px-3 py-3 text-slate-400 hover:text-blue-600 bg-slate-50 border-l border-slate-100 transition-colors">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            </button>
                         </div>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-500 mb-1">受理裁罰日</label>
-                        <input type="date" id="date-end" class="auto-penalty w-full p-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500">
+                        <input type="hidden" id="date-end" class="auto-penalty">
+
+                        <div id="date-end_ce_group" class="hidden flex items-center border border-slate-200 rounded-xl bg-white overflow-hidden w-full focus-within:ring-2 focus-within:ring-blue-500">
+                            <span class="pl-3 text-slate-400 text-sm font-bold whitespace-nowrap">西元</span>
+                            <input type="number" id="date-end_ce_y" class="auto-penalty-ce w-full p-3 outline-none text-center" placeholder="年">
+                            <span class="text-slate-200">/</span>
+                            <input type="number" id="date-end_ce_m" class="auto-penalty-ce w-full p-3 outline-none text-center" placeholder="月">
+                            <span class="text-slate-200">/</span>
+                            <input type="number" id="date-end_ce_d" class="auto-penalty-ce w-full p-3 outline-none text-center" placeholder="日">
+                            <button onclick="openCalendar('date-end_ce')" class="px-3 py-3 text-slate-400 hover:text-blue-600 bg-slate-50 border-l border-slate-100 transition-colors">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            </button>
+                        </div>
+
                         <div id="date-end_roc_group" class="hidden flex items-center border border-slate-200 rounded-xl bg-white overflow-hidden w-full focus-within:ring-2 focus-within:ring-blue-500">
                             <span class="pl-3 text-slate-400 text-sm font-bold whitespace-nowrap">民國</span>
                             <input type="number" id="date-end_roc_y" class="auto-penalty-roc w-full p-3 outline-none text-center" placeholder="年">
@@ -98,6 +147,9 @@
                             <input type="number" id="date-end_roc_m" class="auto-penalty-roc w-full p-3 outline-none text-center" placeholder="月">
                             <span class="text-slate-200">/</span>
                             <input type="number" id="date-end_roc_d" class="auto-penalty-roc w-full p-3 outline-none text-center" placeholder="日">
+                            <button onclick="openCalendar('date-end_roc')" class="px-3 py-3 text-slate-400 hover:text-blue-600 bg-slate-50 border-l border-slate-100 transition-colors">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -115,12 +167,37 @@
         </div>
     </div>
 
+    <div id="calendar-modal" class="hidden fixed inset-0 bg-slate-900/40 z-50 flex items-start justify-center px-4 pt-[15vh] pb-8 backdrop-blur-sm">
+        <div id="calendar-card" class="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden modal-enter">
+            <div class="flex justify-between items-center p-4 border-b border-slate-100 bg-slate-50">
+                <button onclick="changeCalMonth(-1)" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:bg-white hover:shadow-sm transition-all">&lt;</button>
+                <div id="cal-title" class="font-bold text-slate-800 text-lg tracking-wider"></div>
+                <button onclick="changeCalMonth(1)" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:bg-white hover:shadow-sm transition-all">&gt;</button>
+            </div>
+            <div class="p-4">
+                <div class="grid grid-cols-7 text-center text-xs font-bold text-slate-400 mb-2">
+                    <div class="text-rose-400">日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div class="text-emerald-500">六</div>
+                </div>
+                <div id="cal-days" class="grid grid-cols-7 gap-y-1 gap-x-1 text-slate-700"></div>
+            </div>
+            <div class="p-3 border-t border-slate-100 text-right bg-slate-50">
+                <button onclick="closeCalendar()" class="px-5 py-2 rounded-lg text-sm font-bold text-slate-500 hover:bg-slate-200 transition-colors">取消</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const HOLIDAY_DATA = {"2018":["1000011000001100000110000011000","0011000001100011111100011001","0011000001100000110000011000000","100111110000011000001100000110","0000110000011000001100000110000","011000001100000111000011000001","1000001100000110000011000001100","0001100000110000011000001100000","110000011000001100000111000011","0000011001001100000110000011000","001100000110000011000001100000","1100000110000011000000100000111"],"2019":["1000110000011000000100000110000","0111111111000001100000010001","1110000011000001100000110000011","000111100000110000011000001100","0001100000110000011000001100000","110000111000001100000110000011","0000011000001100000110000011000","0011000001100000110000011000001","100000110000111000001100000110","0000010001111000001100000110000","011000001100000110000011000001","1000001100000110000011000001100"],"2020":["1001100000110000011000111111100","11000001100000010000011000011","1000001100000110000011000001100","011110000011000001100000110000","0110000011000001100000110000011","000001100000110000001000111100","0001100000110000011000001100000","1100000110000011000001100000110","000011000001100000110000001000","1111000011100000110000011000001","100000110000011000001100000110","0000110000011000001100000110000"],"2021":["1110000011000001100000110000011","0000011001111111000010000011","1000011000001100000110000011000","011110000110000011000001100000","1100000110000011000001100000110","000011000001110000110000011000","0011000001100000110000011000001","1000001100000110000011000001100","000110000001000001111000110000","0110000011100001100000110000011","000001100000110000011000001100","0001100000110000011000001100001"],"2022":["1100000110000011000000100000111","1111110000011000001100000111","0000110000011000001100000110000","011110001100000110000011000001","1000001100000110000011000001100","001110000011000001100000110000","0110000011000001100000110000011","0000011000001100000110000011000","001100001110000011000001100000","1100000111000011000001100000110","000011000001100000110000011000","0011000001100000110000011000001"],"2023":["1100000100000110000111111111100","0000100000110000001000001111","0001100000110000011000000100000","111110011000001100000110000011","0000011000001100000110000011000","001100000110000001000111100000","1100000110000011000001100000110","0000110000011000001100000110000","011000001100000110000001000011","1000001111000110000011000001100","000110000011000001100000110000","0110000011000001100000110000011"],"2024":["1000011000001100000110000011000","00110001111111000100000110010","0110000011000001100000110000011","000111100000110000011000001100","0001100000110000011000001100000","110000011100001100000110000011","0000011000001100000110000011000","0011000001100000110000011000001","100000110000011010001100000110","0000110001011000001100000110000","011000001100000110000011000001","1000001100000110000011000001100"],"2025":["1001100000110000011000001111111","1100000010000011000001100001","1100000110000011000001100000110","001111000001100000110000011000","0011000001100000110000011000011","100000110000011000001100000110","0000110000011000001100000110000","0110000011000001100000110000011","000001100000110000011000001110","0001110001110000011000011100000","110000011000001100000110000011","0000011000001100000110001011000"],"2026":["1011000001100000110000011000001","1000001100000111111111000011","1000001100000110000011000001100","001111000011000001100000110000","1110000011000001100000110000011","000001100000110000111000001100","0001100000110000011000001100000","1100000110000011000001100000110","000011000001100000110000111100","0011000011100000110000011100001","100000110000011000001100000110","0000110000011000001100001110000"]};
 
-        let currentType = 'normal', currentMode = 'calc', yearMode = 'CE';
+        let currentType = 'normal', currentMode = 'calc', yearMode = 'ROC';
         const weekNames = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
         const dateFieldIDs = ['startDate', 'date-start', 'date-end'];
+
+        // 月曆狀態變數
+        let calTargetPrefix = '';
+        let calIsROC = true;
+        let calViewYear = 115;
+        let calViewMonth = 1;
 
         function setYearMode(mode) {
             yearMode = mode;
@@ -128,21 +205,25 @@
             document.getElementById('btn-roc').className = mode === 'ROC' ? 'px-3 py-1 rounded text-xs font-bold bg-white shadow-sm text-slate-700 transition-all' : 'px-3 py-1 rounded text-xs font-bold text-slate-400 transition-all';
             
             dateFieldIDs.forEach(id => {
-                document.getElementById(id).classList.toggle('hidden', mode === 'ROC');
+                document.getElementById(id + '_ce_group').classList.toggle('hidden', mode === 'ROC');
                 document.getElementById(id + '_roc_group').classList.toggle('hidden', mode === 'CE');
-                syncDate(id, mode === 'CE' ? 'ROC' : 'CE');
             });
             triggerCalc();
         }
 
         function syncDate(id, source) {
             if (source === 'CE') {
-                const ceVal = document.getElementById(id).value;
-                if (ceVal) {
-                    const [y, m, d] = ceVal.split('-');
-                    document.getElementById(id + '_roc_y').value = parseInt(y) - 1911;
-                    document.getElementById(id + '_roc_m').value = parseInt(m);
-                    document.getElementById(id + '_roc_d').value = parseInt(d);
+                const y = parseInt(document.getElementById(id + '_ce_y').value);
+                const m = parseInt(document.getElementById(id + '_ce_m').value);
+                const d = parseInt(document.getElementById(id + '_ce_d').value);
+                if (y && m && d) {
+                    const ceM = ('0' + m).slice(-2);
+                    const ceD = ('0' + d).slice(-2);
+                    document.getElementById(id).value = `${y}-${ceM}-${ceD}`;
+                    
+                    document.getElementById(id + '_roc_y').value = y - 1911;
+                    document.getElementById(id + '_roc_m').value = m;
+                    document.getElementById(id + '_roc_d').value = d;
                 }
             } else {
                 const y = parseInt(document.getElementById(id + '_roc_y').value);
@@ -153,6 +234,10 @@
                     const ceM = ('0' + m).slice(-2);
                     const ceD = ('0' + d).slice(-2);
                     document.getElementById(id).value = `${ceY}-${ceM}-${ceD}`;
+                    
+                    document.getElementById(id + '_ce_y').value = ceY;
+                    document.getElementById(id + '_ce_m').value = m;
+                    document.getElementById(id + '_ce_d').value = d;
                 }
             }
         }
@@ -177,7 +262,7 @@
             currentType = t;
             document.getElementById('btn-normal').className = t === 'normal' ? 'btn-active flex-1 py-2 rounded-lg text-sm font-bold transition-all' : 'flex-1 py-2 rounded-lg text-sm font-bold text-slate-500';
             document.getElementById('btn-adverse').className = t === 'adverse' ? 'btn-active flex-1 py-2 rounded-lg text-sm font-bold transition-all' : 'flex-1 py-2 rounded-lg text-sm font-bold text-slate-500';
-            document.getElementById('type-desc').innerText = t === 'normal' ? "※ 一般案件：末日遇假日順延。" : "※ 不利處分：始日計 1 日且不順延。";
+            document.getElementById('type-desc').innerText = t === 'normal' ? "※ 一般案件：末日遇假日順延。" : "※ 不利處分：始日計入且不順延。";
             runCalc();
         }
 
@@ -287,28 +372,117 @@
             document.getElementById('status-card').className = `p-5 rounded-2xl border ${themes[color]}`;
         }
 
+        /* --- 共用月曆彈窗功能 --- */
+        function openCalendar(targetPrefix) {
+            calTargetPrefix = targetPrefix;
+            calIsROC = targetPrefix.endsWith('_roc'); 
+
+            const inputY = document.getElementById(targetPrefix + '_y').value;
+            const inputM = document.getElementById(targetPrefix + '_m').value;
+            
+            if (inputY && inputM) {
+                calViewYear = parseInt(inputY);
+                calViewMonth = parseInt(inputM);
+            } else {
+                const now = new Date();
+                calViewYear = calIsROC ? (now.getFullYear() - 1911) : now.getFullYear();
+                calViewMonth = now.getMonth() + 1;
+            }
+
+            renderCalendar();
+            
+            const modal = document.getElementById('calendar-modal');
+            const card = document.getElementById('calendar-card');
+            modal.classList.remove('hidden');
+            
+            card.classList.remove('modal-enter-active');
+            void card.offsetWidth;
+            card.classList.add('modal-enter-active');
+        }
+
+        function closeCalendar() {
+            document.getElementById('calendar-modal').classList.add('hidden');
+        }
+
+        function changeCalMonth(delta) {
+            calViewMonth += delta;
+            if (calViewMonth > 12) { calViewMonth = 1; calViewYear++; }
+            if (calViewMonth < 1) { calViewMonth = 12; calViewYear--; }
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            const ceYear = calIsROC ? calViewYear + 1911 : calViewYear;
+            const firstDay = new Date(ceYear, calViewMonth - 1, 1).getDay();
+            const daysInMonth = new Date(ceYear, calViewMonth, 0).getDate();
+
+            const titlePrefix = calIsROC ? '民國' : '西元';
+            document.getElementById('cal-title').innerText = `${titlePrefix} ${calViewYear} 年 ${calViewMonth} 月`;
+
+            let html = '';
+            for (let i = 0; i < firstDay; i++) {
+                html += `<div></div>`;
+            }
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const selY = document.getElementById(calTargetPrefix + '_y').value;
+                const selM = document.getElementById(calTargetPrefix + '_m').value;
+                const selD = document.getElementById(calTargetPrefix + '_d').value;
+                
+                const isSelected = (parseInt(selY) === calViewYear && parseInt(selM) === calViewMonth && parseInt(selD) === d);
+                const bgClass = isSelected ? "bg-blue-600 text-white shadow-md" : "hover:bg-blue-50 text-slate-700";
+                
+                html += `<div class="cursor-pointer rounded-full flex items-center justify-center aspect-square text-sm font-semibold transition-all ${bgClass}" onclick="selectDate(${calViewYear}, ${calViewMonth}, ${d})">${d}</div>`;
+            }
+            document.getElementById('cal-days').innerHTML = html;
+        }
+
+        function selectDate(y, m, d) {
+            document.getElementById(calTargetPrefix + '_y').value = y;
+            document.getElementById(calTargetPrefix + '_m').value = m;
+            document.getElementById(calTargetPrefix + '_d').value = d;
+            
+            const baseId = calTargetPrefix.replace('_roc', '').replace('_ce', '');
+            const sourceMode = calIsROC ? 'ROC' : 'CE';
+            
+            syncDate(baseId, sourceMode);
+            triggerCalc();
+            closeCalendar();
+        }
+        /* ------------------------ */
+
         window.onload = () => {
-            const today = new Date().toISOString().split('T')[0];
+            const today = new Date();
+            const y = today.getFullYear();
+            const m = today.getMonth() + 1;
+            const d = today.getDate();
+
             dateFieldIDs.forEach(id => {
-                document.getElementById(id).value = today;
-                syncDate(id, 'CE');
+                document.getElementById(id + '_ce_y').value = y;
+                document.getElementById(id + '_ce_m').value = m;
+                document.getElementById(id + '_ce_d').value = d;
+                syncDate(id, 'CE'); 
             });
 
-            document.querySelectorAll('.auto-calc').forEach(el => el.addEventListener('input', () => {
-                if(el.type === 'date') syncDate(el.id, 'CE');
+            document.querySelectorAll('.auto-calc-ce').forEach(el => el.addEventListener('input', () => {
+                syncDate('startDate', 'CE'); triggerCalc();
+            }));
+            document.querySelectorAll('.auto-penalty-ce').forEach(el => el.addEventListener('input', (e) => {
+                syncDate(e.target.id.replace('_ce_y','').replace('_ce_m','').replace('_ce_d',''), 'CE'); 
                 triggerCalc();
             }));
+
             document.querySelectorAll('.auto-calc-roc').forEach(el => el.addEventListener('input', () => {
                 syncDate('startDate', 'ROC'); triggerCalc();
-            }));
-            document.querySelectorAll('.auto-penalty').forEach(el => el.addEventListener('input', () => {
-                if(el.type === 'date') syncDate(el.id, 'CE');
-                triggerCalc();
             }));
             document.querySelectorAll('.auto-penalty-roc').forEach(el => el.addEventListener('input', (e) => {
                 syncDate(e.target.id.replace('_roc_y','').replace('_roc_m','').replace('_roc_d',''), 'ROC'); 
                 triggerCalc();
             }));
+
+            document.querySelectorAll('.auto-calc').forEach(el => {
+                if (el.type !== 'hidden') el.addEventListener('input', triggerCalc);
+            });
 
             setYearMode('ROC');
         };
