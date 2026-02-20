@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-TW" version="3.4">
+<html lang="zh-TW">
 
 <head>
     <meta charset="UTF-8">
@@ -541,7 +541,7 @@
 
             const info = getFineInfo(totalDays, penaltyNation);
             document.getElementById('fine-amount').innerText = `${info.currency} ${info.amount.toLocaleString()} 元`;
-            document.getElementById('fine-basis').innerText = `適用級距：${info.basis}`;
+            document.getElementById('fine-basis').innerText = `共 ${totalDays} 天　適用級距：${info.basis}`;
             document.getElementById('fine-note').innerText = info.note;
             fineBox.classList.remove('hidden');
         }
@@ -746,5 +746,5 @@
         });
     </script>
 </body>
-
+<div version="3.5"></div>
 </html>
