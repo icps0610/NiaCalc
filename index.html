@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-TW" version="3.3">
+<html lang="zh-TW" version="3.4">
 
 <head>
     <meta charset="UTF-8">
@@ -384,7 +384,7 @@
             let y = date.getFullYear();
             let m = ('0' + (date.getMonth() + 1)).slice(-2);
             let d = ('0' + date.getDate()).slice(-2);
-            if (yearMode === 'ROC') return `${y - 1911} 年 ${m} 月 ${d} 日`;
+            if (yearMode === 'ROC') return `${y - 1911}-${m}-${d}`;
             return `${y}-${m}-${d}`;
         }
 
@@ -432,7 +432,7 @@
             if (currentType === 'normal') actualStart.setDate(actualStart.getDate() + 1);
 
             const total = Math.round((end - actualStart) / 864e5) + 1;
-            showResult("屆滿日期 (末日)", getLocalDateStr(end), weekNames[end.getDay()], detail, "blue", `共計：${total} 天`);
+            showResult("屆滿日期 (末日)", getLocalDateStr(end) + `, 共 ${total} 日`, weekNames[end.getDay()], detail, "blue", ``);
         }
 
         function getEquivalentDate(start, addedMonths) {
