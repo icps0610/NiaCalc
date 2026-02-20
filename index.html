@@ -252,12 +252,6 @@
                         </div>
                     </div>
 
-                    <!-- 總天數區塊 -->
-                    <div id="total-days-box" class="hidden bg-slate-50 border border-slate-200 rounded-2xl p-4">
-                        <div class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">逾期停留總日數</div>
-                        <div id="total-days-value" class="text-2xl font-black text-slate-800"></div>
-                    </div>
-
                 </div>
 
                 <div id="result-area" class="mt-8 hidden border-t border-dashed pt-6">
@@ -525,17 +519,12 @@
         function updateFineDisplay(totalDays) {
             const fineBox = document.getElementById('fine-display');
             const nationBox = document.getElementById('nation-switcher');
-            const totalBox = document.getElementById('total-days-box');
 
             if (totalDays <= 0) {
                 fineBox.classList.add('hidden');
                 nationBox.classList.add('hidden');
-                totalBox.classList.add('hidden');
                 return;
             }
-
-            totalBox.classList.remove('hidden');
-            document.getElementById('total-days-value').innerText = `共 ${totalDays} 日`;
 
             nationBox.classList.remove('hidden');
 
@@ -747,4 +736,5 @@
     </script>
 </body>
 <div version="3.5"></div>
+
 </html>
