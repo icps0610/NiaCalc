@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-TW" version="3.5">
+<html lang="zh-TW" version="3.4">
 
 <head>
     <meta charset="UTF-8">
@@ -251,6 +251,13 @@
                             </button>
                         </div>
                     </div>
+
+                    <!-- 總天數區塊 -->
+                    <div id="total-days-box" class="hidden bg-slate-50 border border-slate-200 rounded-2xl p-4">
+                        <div class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">逾期停留總日數</div>
+                        <div id="total-days-value" class="text-2xl font-black text-slate-800"></div>
+                    </div>
+
                 </div>
 
                 <div id="result-area" class="mt-8 hidden border-t border-dashed pt-6">
@@ -261,6 +268,25 @@
                         <div id="res-total-days" class="text-xs font-bold mt-2 text-slate-600"></div>
                         <div id="res-detail" class="text-xs mt-3 leading-relaxed opacity-80 whitespace-pre-wrap"></div>
                     </div>
+                </div>
+
+                <!-- 中國 / 外國 切換（位於綠色結果下方） -->
+                <div id="nation-switcher" class="hidden mt-4">
+                    <div class="flex bg-slate-100 p-1 rounded-xl">
+                        <button onclick="setPenaltyNation('china')" id="btn-china"
+                            class="btn-active flex-1 py-2 rounded-lg text-sm font-bold transition-all">🇨🇳 中國人</button>
+                        <button onclick="setPenaltyNation('foreign')" id="btn-foreign"
+                            class="flex-1 py-2 rounded-lg text-sm font-bold text-slate-500 transition-all">🌏
+                            外國人</button>
+                    </div>
+                </div>
+
+                <!-- 罰金顯示區塊（位於切換鈕下方） -->
+                <div id="fine-display" class="hidden mt-4 bg-amber-50 border border-amber-200 rounded-2xl p-4">
+                    <div class="text-[10px] font-black uppercase tracking-widest text-amber-600 mb-1">應裁處罰鍰</div>
+                    <div id="fine-amount" class="text-2xl font-black text-amber-700"></div>
+                    <div id="fine-basis" class="text-xs text-amber-600 mt-1 opacity-80"></div>
+                    <div id="fine-note" class="text-[10px] text-amber-500 mt-2 italic"></div>
                 </div>
             </div>
         </div>
@@ -323,7 +349,7 @@
             const yEl = document.getElementById(id + '_' + source.toLowerCase() + '_y');
             const mEl = document.getElementById(id + '_' + source.toLowerCase() + '_m');
             const dEl = document.getElementById(id + '_' + source.toLowerCase() + '_d');
-            
+
             if (!yEl || !mEl || !dEl) return;
 
             const y = parseInt(yEl.value);
@@ -370,6 +396,10 @@
 
             document.getElementById('tab-calc').className = m === 'calc' ? 'flex-1 py-4 text-sm font-bold tab-active' : 'flex-1 py-4 text-sm font-bold text-slate-400';
             document.getElementById('tab-penalty').className = m === 'penalty' ? 'flex-1 py-4 text-sm font-bold tab-active' : 'flex-1 py-4 text-sm font-bold text-slate-400';
+
+            // 切換到合法期間模式時，隱藏罰金相關區塊
+            if (m === 'calc') updateFineDisplay(0);
+
             triggerCalc();
         }
 
@@ -425,7 +455,7 @@
                 document.getElementById('result-area').classList.add('hidden');
                 return;
             }
-            
+
             let end;
             let detail;
 
@@ -438,7 +468,7 @@
                 } else {
                     end = getEquivalentDate(start, p * 12);
                 }
-                
+
                 let skip = 0;
                 while (isHoliday(end)) { end.setDate(end.getDate() + 1); skip++; }
                 detail = `一般案件：始日不計。` + (skip > 0 ? ` 末日逢假日順延 ${skip} 天。` : "");
@@ -460,16 +490,89 @@
             showResult("屆滿日期 (末日)", getLocalDateStr(end) + `, 共 ${total} 日`, weekNames[end.getDay()], detail, "blue", ``);
         }
 
+        let penaltyNation = 'china'; // 'china' or 'foreign'
+        let lastTotalDays = 0; // 儲存最近一次計算的總天數
+
+        function setPenaltyNation(nation) {
+            penaltyNation = nation;
+            document.getElementById('btn-china').className = nation === 'china' ? 'btn-active flex-1 py-2 rounded-lg text-sm font-bold transition-all' : 'flex-1 py-2 rounded-lg text-sm font-bold text-slate-500 transition-all';
+            document.getElementById('btn-foreign').className = nation === 'foreign' ? 'btn-active flex-1 py-2 rounded-lg text-sm font-bold transition-all' : 'flex-1 py-2 rounded-lg text-sm font-bold text-slate-500 transition-all';
+            updateFineDisplay(lastTotalDays);
+        }
+
+        function getFineInfo(totalDays, nation) {
+            if (nation === 'china') {
+                // 大陸地區人民（兩岸條例）
+                let amount, basis;
+                if (totalDays <= 10) { amount = 2000; basis = '逾期 10 日以下'; }
+                else if (totalDays <= 30) { amount = 4000; basis = '逾期 11 日以上，30 日以下'; }
+                else if (totalDays <= 60) { amount = 6000; basis = '逾期 31 日以上，60 日以下'; }
+                else if (totalDays <= 90) { amount = 8000; basis = '逾期 61 日以上，90 日以下'; }
+                else { amount = 10000; basis = '逾期 91 日以上'; }
+                return { amount, basis, currency: 'NT$', note: '※ 未滿14歲者不罰；14歲以上未滿18歲者減半。依《兩岸條例》裁處。' };
+            } else {
+                // 外國人（入出國及移民法第 74 條之 1）
+                let amount, basis;
+                if (totalDays <= 10) { amount = 10000; basis = '逾期 10 日以下'; }
+                else if (totalDays <= 30) { amount = 20000; basis = '逾期 11 日以上，30 日以下'; }
+                else if (totalDays <= 60) { amount = 30000; basis = '逾期 31 日以上，60 日以下'; }
+                else if (totalDays <= 90) { amount = 40000; basis = '逾期 61 日以上，90 日以下'; }
+                else { amount = 50000; basis = '逾期 91 日以上'; }
+                return { amount, basis, currency: 'NT$', note: '※ 依《入出國及移民法》第74條之1裁處。' };
+            }
+        }
+
+        function updateFineDisplay(totalDays) {
+            const fineBox = document.getElementById('fine-display');
+            const nationBox = document.getElementById('nation-switcher');
+            const totalBox = document.getElementById('total-days-box');
+
+            if (totalDays <= 0) {
+                fineBox.classList.add('hidden');
+                nationBox.classList.add('hidden');
+                totalBox.classList.add('hidden');
+                return;
+            }
+
+            totalBox.classList.remove('hidden');
+            document.getElementById('total-days-value').innerText = `共 ${totalDays} 日`;
+
+            nationBox.classList.remove('hidden');
+
+            const info = getFineInfo(totalDays, penaltyNation);
+            document.getElementById('fine-amount').innerText = `${info.currency} ${info.amount.toLocaleString()} 元`;
+            document.getElementById('fine-basis').innerText = `適用級距：${info.basis}`;
+            document.getElementById('fine-note').innerText = info.note;
+            fineBox.classList.remove('hidden');
+        }
+
         function runPenalty() {
             const v1 = document.getElementById('date-start').value;
             const v2 = document.getElementById('date-end').value;
-            if (!v1 || !v2) return;
+            if (!v1 || !v2) {
+                lastTotalDays = 0;
+                updateFineDisplay(0);
+                return;
+            }
 
             const start = parseDate(v1);
             const end = parseDate(v2);
-            if (!start || !end) return;
+            if (!start || !end) {
+                lastTotalDays = 0;
+                updateFineDisplay(0);
+                return;
+            }
 
-            if (start > end) return showResult("錯誤", "日期順序有誤", "", "起算日不可晚於受理日", "rose", "");
+            if (start > end) {
+                lastTotalDays = 0;
+                updateFineDisplay(0);
+                return showResult("錯誤", "日期順序有誤", "", "起算日不可晚於受理日", "rose", "");
+            }
+
+            // 計算總天數（含起算日）
+            const totalDays = Math.round((end - start) / 864e5) + 1;
+            lastTotalDays = totalDays;
+            updateFineDisplay(totalDays);
 
             let totalMonths = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
             let tempDate = getEquivalentDate(start, totalMonths);
